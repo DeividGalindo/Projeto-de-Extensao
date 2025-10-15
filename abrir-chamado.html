@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abrir Chamado - ServiceDesk App</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="form-page-container">
+        <div class="form-box">
+            <h1>Abertura de Chamado</h1>
+            <form id="form-abrir-chamado">
+                <div class="input-group">
+                    <label for="titulo">Título</label>
+                    <input type="text" id="titulo" name="titulo" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="descricao">Descrição</label>
+                    <textarea id="descricao" name="descricao" rows="4" required></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="categoria">Categoria</label>
+                    <select id="categoria" name="categoria">
+                        <option value="hardware">Hardware</option>
+                        <option value="software">Software</option>
+                        <option value="rede">Rede</option>
+                        <option value="outros">Outros</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <button type="button" class="btn btn-secondary">Adicionar Anexos</button>
+                </div>
+
+                <button type="submit" class="btn btn-accent">Enviar Chamado</button>
+                <button type="button" class="btn btn-primary" id="btn-voltar-painel">Voltar ao Painel do Solicitante</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
