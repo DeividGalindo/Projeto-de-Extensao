@@ -189,3 +189,54 @@ body {
     padding: 8px 15px;
     font-size: 0.9em;
 }
+
+.form-page-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.form-box {
+    background-color: var(--card-color);
+    padding: 40px 30px;
+    border-radius: var(--border-radius);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.form-box h1 {
+    font-size: 1.5em;
+    margin-bottom: 30px;
+}
+
+.input-group textarea,
+.input-group select {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    background-color: var(--input-color);
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    font-size: 1em;
+    font-family: 'Poppins', sans-serif;
+    box-sizing: border-box;
+    resize: vertical; 
+}
+
+.form-box .btn {
+    margin-top: 10px;
+}
+
+.btn-secondary {
+    background-color: var(--input-color);
+    color: var(--text-color);
+}
+
+.btn-secondary:hover {
+    background-color: #3c3c3c;
+}
