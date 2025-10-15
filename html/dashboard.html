@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ServiceDesk App</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h2>Aplicativo ServiceDesk</h2>
+        </header>
+
+        <main class="dashboard-content">
+            <section class="card summary-card">
+                <h3>Resumo de Solicitações</h3>
+                <div class="summary-details">
+                    <p>Aberto: <span>5</span></p>
+                    <p>Data: <span>12</span></p>
+                </div>
+                <button class="btn btn-accent">Abrir Novo Chamado</button>
+            </section>
+
+            <section class="tickets-section">
+                <h3>Chamados em Andamento</h3>
+                
+                <div class="ticket-card card">
+                    <div class="ticket-info">
+                        <h4>Chamado #1234</h4>
+                        <p>Status: <span class="status in-progress">Em Progresso</span></p>
+                    </div>
+                    <div class="ticket-actions">
+                        <button class="btn btn-secondary">Detalhes</button>
+                        <button class="btn btn-accent-secondary">Editar</button>
+                    </div>
+                </div>
+
+                <div class="ticket-card card">
+                    <div class="ticket-info">
+                        <h4>Chamado #1235</h4>
+                        <p>Status: <span class="status in-progress">Em Progresso</span></p>
+                    </div>
+                    <div class="ticket-actions">
+                        <button class="btn btn-secondary">Detalhes</button>
+                        <button class="btn btn-accent-secondary">Editar</button>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+</body>
+</html>
