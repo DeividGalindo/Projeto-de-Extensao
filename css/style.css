@@ -1,0 +1,106 @@
+/* Estilos Globais e Variáveis de Cor */
+:root {
+    --bg-color: #121212;
+    --card-color: #1E1E1E;
+    --input-color: #2C2C2C;
+    --primary-accent-color: #D145D1;
+    --text-color: #FFFFFF;
+    --text-color-dark: #000000;
+    --border-radius: 12px;
+}
+
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Container do Login */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 20px;
+}
+
+.login-box {
+    background-color: var(--card-color);
+    padding: 40px 30px;
+    border-radius: var(--border-radius);
+    width: 100%;
+    max-width: 350px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.login-box h1 {
+    font-size: 1.5em;
+    margin-bottom: 30px;
+}
+
+/* Grupo de Inputs (Label + Input) */
+.input-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    background-color: var(--input-color);
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+/* Botões e Links */
+.btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--text-color);
+    color: var(--text-color-dark);
+    margin-top: 10px;
+}
+
+.btn-primary:hover {
+    background-color: #e0e0e0;
+}
+
+.forgot-password {
+    display: block;
+    margin-top: 20px;
+    color: var(--text-color);
+    opacity: 0.8;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.forgot-password:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
