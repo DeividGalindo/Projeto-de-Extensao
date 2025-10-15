@@ -102,11 +102,11 @@ body {
     text-decoration: underline;
 }
 
-/* --- Estilos do Dashboard --- */
+
 
 .dashboard-container {
     width: 100%;
-    max-width: 400px; /* Simula a largura de um dispositivo móvel */
+    max-width: 400px; 
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -120,10 +120,10 @@ body {
 
 .dashboard-content {
     padding: 0 20px 20px 20px;
-    overflow-y: auto; /* Permite rolar se o conteúdo for grande */
+    overflow-y: auto; 
 }
 
-/* Estilo genérico para os cartões */
+
 .card {
     background-color: var(--card-color);
     padding: 20px;
@@ -146,17 +146,17 @@ body {
     font-weight: 600;
 }
 
-/* Botão de Destaque (Roxo) */
+
 .btn-accent {
     background-color: var(--primary-accent-color);
     color: var(--text-color);
 }
 
 .btn-accent:hover {
-    background-color: #b83cb8; /* Um tom um pouco mais escuro para o hover */
+    background-color: #b83cb8; 
 }
 
-/* Seção de Chamados */
+
 .tickets-section h3 {
     margin-bottom: 15px;
 }
@@ -176,15 +176,14 @@ body {
 }
 
 .status.in-progress {
-    color: #f0ad4e; /* Laranja/Amarelo para status */
+    color: #f0ad4e; 
 }
 
 .ticket-actions {
     display: flex;
-    gap: 10px; /* Espaçamento entre os botões */
+    gap: 10px; 
 }
 
-/* Ajuste nos botões para não ocuparem 100% da largura dentro do card */
 .ticket-actions .btn {
     width: auto;
     padding: 8px 15px;
