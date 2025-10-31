@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes - ServiceDesk App</title>
+    <link relstylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container"> <header class="page-header">
+            <button class="btn-back" id="btn-voltar-dashboard">
+                &larr; </button>
+            <h2>Detalhes do Chamado</h2>
+        </header>
+
+        <main class="dashboard-content">
+            <section class="card details-card">
+                <h3>Chamado #12345</h3>
+                <p><strong>Status:</strong> <span class="status open">Aberto</span></p>
+                <p><strong>Prioridade:</strong> Alta</p>
+                <p><strong>Descrição:</strong> Detalhes do problema relatado pelo solicitante...</p>
+            </section>
+
+            <section class="card history-card">
+                <h3>Histórico de Atualizações</h3>
+                <ul class="history-list">
+                    <li>
+                        <strong>[10/10/2023]</strong> - Atualização realizada por Maria: Verificação inicial concluída.
+                    </li>
+                    <li>
+                        <strong>[11/10/2023]</strong> - Atualização realizada por João: Em andamento.
+                    </li>
+                    <li>
+                        <strong>[12/10/2023]</strong> - Atualização realizada por Ana: Resolução em progresso.
+                    </li>
+                </ul>
+            </section>
+
+            <div class="page-actions">
+                <button class="btn btn-accent">Adicionar Comentário</button>
+                <button class="btn btn-primary" id="btn-retornar-painel">Retornar ao Painel do Solicitante</button>
+            </div>
+        </main>
+    </div>
+    <script src="js/script.js"></script> </body>
+</html>
