@@ -241,3 +241,73 @@ body {
     background-color: #3c3c3c;
 }
 
+/* --- Estilos da Página de Detalhes --- */
+
+.page-header {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    gap: 15px; /* Espaço entre o botão e o título */
+    border-bottom: 1px solid var(--input-color);
+}
+
+.page-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.btn-back {
+    background: none;
+    border: 2px solid var(--input-color);
+    color: var(--text-color);
+    font-size: 1.5em;
+    font-weight: 600;
+    border-radius: 50%; /* Botão redondo */
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-back:hover {
+    background-color: var(--input-color);
+}
+
+/* Detalhes do chamado */
+.details-card p {
+    margin: 10px 0;
+    line-height: 1.5;
+}
+
+.status.open {
+    color: #5cb85c; /* Verde para status "Aberto" */
+}
+
+/* Histórico de Atualizações */
+.history-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.history-list li {
+    font-size: 0.9em;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--input-color);
+    line-height: 1.6;
+}
+
+.history-list li:last-child {
+    border-bottom: none;
+}
+
+/* Botões no final da página */
+.page-actions {
+    padding: 0 20px 20px 20px;
+}
+.page-actions .btn {
+    margin-top: 10px;
+}
