@@ -117,3 +117,59 @@ a:hover {
     border-color: var(--primary-accent-color);
     box-shadow: 0 0 0 3px rgba(0, 163, 255, 0.2);
 }
+/* --- 5. Botões (Estilo Minimalista) --- */
+.btn {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius);
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--default-transition);
+    text-align: center;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.btn-accent {
+    background-color: var(--primary-accent-color);
+    color: var(--text-color-on-accent);
+    border-color: var(--primary-accent-color);
+}
+.btn-accent:hover {
+    background-color: var(--primary-accent-hover);
+    border-color: var(--primary-accent-hover);
+    box-shadow: 0 4px 15px rgba(0, 163, 255, 0.2);
+}
+
+.btn-primary {
+    background-color: transparent;
+    color: var(--primary-accent-color);
+    border-color: var(--primary-accent-color);
+}
+.btn-primary:hover {
+    background-color: rgba(0, 163, 255, 0.1);
+    color: var(--primary-accent-hover);
+}
+
+.btn-secondary {
+    background-color: var(--input-color);
+    color: var(--text-color-secondary);
+    border-color: var(--border-color);
+}
+.btn-secondary:hover {
+    background-color: #242933;
+    border-color: var(--text-color-secondary);
+    color: var(--text-color);
+}
+
+.forgot-password {
+    display: block;
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: var(--text-color-secondary);
+}
+.forgot-password:hover {
+    color: var(--text-color);
+}
