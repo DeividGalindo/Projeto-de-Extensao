@@ -78,3 +78,42 @@ a:hover {
     font-size: 1.5em;
     margin-bottom: 30px;
 }
+/* --- 4. Formulários (Inputs, Labels, Selects) --- */
+.input-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: var(--text-color-secondary);
+}
+
+.input-group input,
+.input-group textarea,
+.input-group select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    background-color: var(--input-color);
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    font-size: 1em;
+    font-family: 'Poppins', sans-serif;
+    transition: var(--default-transition);
+}
+
+.input-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.input-group input:focus,
+.input-group textarea:focus,
+.input-group select:focus {
+    outline: none;
+    border-color: var(--primary-accent-color);
+    box-shadow: 0 0 0 3px rgba(0, 163, 255, 0.2);
+}
