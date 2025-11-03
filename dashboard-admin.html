@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Administrador - ServiceDesk App</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos adicionais específicos para o painel de admin */
+        .assignment-controls {
+            margin-top: 15px;
+            text-align: left;
+        }
+        .assignment-controls label {
+            font-size: 0.8em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .assignment-controls select {
+             width: 100%;
+            padding: 10px;
+            border: none;
+            background-color: var(--input-color);
+            border-radius: var(--border-radius);
+            color: var(--text-color);
+            font-size: 0.9em;
+            font-family: 'Poppins', sans-serif;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h2>Painel do Administrador</h2>
+        </header>
+
+        <main class="dashboard-content">
+            <section class="tickets-section">
+                <h3>Todos os Chamados</h3>
+                
+                <div id="admin-ticket-list">
+                    </div>
+
+            </section>
+        </main>
+    </div>
+    <script src="js/main.js"></script>
+</body>
+</html>

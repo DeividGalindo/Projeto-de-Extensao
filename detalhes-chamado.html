@@ -10,32 +10,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="dashboard-container"> <header class="page-header">
+    <div class="dashboard-container"> 
+        <header class="page-header">
             <button class="btn-back" id="btn-voltar-dashboard">
-                &larr; </button>
+                &larr; 
+            </button>
             <h2>Detalhes do Chamado</h2>
         </header>
 
         <main class="dashboard-content">
             <section class="card details-card">
-                <h3>Chamado #12345</h3>
-                <p><strong>Status:</strong> <span class="status open">Aberto</span></p>
-                <p><strong>Prioridade:</strong> Alta</p>
-                <p><strong>Descrição:</strong> Detalhes do problema relatado pelo solicitante...</p>
+                <h3 id="detalhes-titulo">Chamado #...</h3>
+                <p><strong>Status:</strong> <span class="status" id="detalhes-status">...</span></p>
+                <p><strong>Departamento:</strong> <span id="detalhes-departamento">...</span></p>
+                <p><strong>Prioridade:</strong> <span id="detalhes-prioridade">...</span></p>
+                <p><strong>Descrição:</strong> <span id="detalhes-descricao">...</span></p>
             </section>
 
             <section class="card history-card">
                 <h3>Histórico de Atualizações</h3>
-                <ul class="history-list">
-                    <li>
-                        <strong>[10/10/2023]</strong> - Atualização realizada por Maria: Verificação inicial concluída.
-                    </li>
-                    <li>
-                        <strong>[11/10/2023]</strong> - Atualização realizada por João: Em andamento.
-                    </li>
-                    <li>
-                        <strong>[12/10/2023]</strong> - Atualização realizada por Ana: Resolução em progresso.
-                    </li>
+                <ul class="history-list" id="detalhes-historico">
+                    <li>Carregando histórico...</li>
                 </ul>
             </section>
 
@@ -45,5 +40,6 @@
             </div>
         </main>
     </div>
-    <script src="js/main.js"></script> </body>
+    <script src="js/main.js"></script> 
+</body>
 </html>
