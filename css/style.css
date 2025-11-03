@@ -49,3 +49,32 @@ a:hover {
     text-decoration: underline;
     color: var(--primary-accent-hover);
 }
+
+/* --- 3. Contêineres de Página (Login, Formulários) --- */
+.login-container,
+.form-page-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.login-box,
+.form-box {
+    background-color: var(--card-color);
+    padding: 40px 30px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.login-box h1,
+.form-box h1 {
+    font-size: 1.5em;
+    margin-bottom: 30px;
+}
