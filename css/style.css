@@ -370,3 +370,48 @@ a:hover {
     outline: none;
     border-color: var(--primary-accent-color);
 }
+/* --- 11. Media Queries para Responsividade --- */
+
+@media (min-width: 768px) {
+    .dashboard-container {
+        margin: 2rem auto;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        min-height: auto;
+    }
+    
+    .dashboard-content {
+        padding: 30px;
+    }
+
+    .page-header, .page-actions {
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+    .summary-card {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .summary-details {
+        width: auto;
+        gap: 30px;
+    }
+
+    .ticket-card {
+        flex-direction: row;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .ticket-actions {
+        flex-direction: row;
+        width: auto;
+    }
+
+    .ticket-actions .btn {
+        width: auto;
+    }
+}
