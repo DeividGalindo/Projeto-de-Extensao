@@ -316,17 +316,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const chamados = JSON.parse(localStorage.getItem('chamados'));
         const chamado = chamados.find(c => c.id == ticketId);
 
-        if (chamado) {
-            document.getElementById('detalhes-titulo').textContent = `Chamado #${chamado.id} - ${chamado.titulo}`;
-            document.getElementById('detalhes-status').textContent = chamado.status;
-            document.getElementById('detalhes-status').className = `status ${chamado.status.toLowerCase().replace(' ', '-')}`;
-            document.getElementById('detalhes-departamento').textContent = chamado.departamento || 'Não designado';
-            document.getElementById('detalhes-prioridade').textContent = chamado.prioridade || 'Não definida';
-            document.getElementById('detalhes-descricao').textContent = chamado.descricao;
+        if (!chamado) {
+            alert("Chamado não encontrado.");
+            window.location.href = "dashboard.html";
+            return;
+        }
 
-            const historyList = document.getElementById('detalhes-historico');
-            historyList.innerHTML = ''; 
+        document.getElementById('detalhes-titulo').textContent = `Chamado #${chamado.id} - ${chamado.titulo}`;
+        document.getElementById('detalhes-status').textContent = chamado.status;
+        document.getElementById('detalhes-status').className = `status ${chamado.status.toLowerCase().replace(' ', '-')}`;
+        document.getElementById('detalhes-departamento').textContent = chamado.departamento || 'Não designado';
+        document.getElementById('detalhes-prioridade').textContent = chamado.prioridade || 'Não definida';
+        document.getElementById('detalhes-descricao').textContent = chamado.descricao;
 
+        const historyList = document.getElementById('detalhes-historico');
+        
+        function renderizarHistorico() {
+            historyList.innerHTML = '';  
             if (chamado.historico && chamado.historico.length > 0) {
                 chamado.historico.forEach(item => {
                     const li = document.createElement('li');
@@ -336,31 +342,47 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 historyList.innerHTML = '<li>Nenhuma atualização registrada.</li>';
             }
+        }
+        
+        renderizarHistorico(); 
 
-            const btnAdicionarComentario = document.querySelector('.page-actions .btn-accent');
-            if (btnAdicionarComentario) {
-                btnAdicionarComentario.addEventListener('click', function() {
-                    const acao = prompt("Digite sua atualização ou comentário:");
+        const commentForm = document.getElementById('form-add-comment');
+        if (commentForm) {
+            commentForm.addEventListener('submit', function(event) {
+                event.preventDefault(); 
+                
+                const commentTextarea = document.getElementById('novo-comentario');
+                const acao = commentTextarea.value;
+                
+                if (acao && acao.trim() !== "") {
+                    const dataFormatada = new Date().toLocaleDateString('pt-BR');
                     
-                    if (acao && acao.trim() !== "") {
-                        const dataFormatada = new Date().toLocaleDateString('pt-BR');
+                    const novoItemHistorico = {
+                        data: dataFormatada,
+                        autor: localStorage.getItem('usuarioLogado') || "Usuário", 
+                        acao: acao
+                    };
+                    
+                    const chamadoIndex = chamados.findIndex(c => c.id == ticketId);
+                    if (chamadoIndex > -1) {
+                        chamados[chamadoIndex].historico.push(novoItemHistorico);
                         
-                        const novoItemHistorico = {
-                            data: dataFormatada,
-                            autor: localStorage.getItem('usuarioLogado') || "Usuário", 
-                            acao: acao
-                        };
+                        localStorage.setItem('chamados', JSON.stringify(chamados));
                         
-                        const chamadoIndex = chamados.findIndex(c => c.id == ticketId);
-                        if (chamadoIndex > -1) {
-                            chamados[chamadoIndex].historico.push(novoItemHistorico);
-                            localStorage.setItem('chamados', JSON.stringify(chamados));
-                            alert("Comentário adicionado! A página será atualizada.");
-                            window.location.reload(); 
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>[${novoItemHistorico.data}]</strong> - Atualização realizada por ${novoItemHistorico.autor}: ${novoItemHistorico.acao}`;
+                        historyList.appendChild(li);
+                        
+                        commentTextarea.value = '';
+                        
+                        if (historyList.querySelector('li').textContent === "Nenhuma atualização registrada.") {
+                             historyList.querySelector('li').remove();
                         }
+
+                        alert("Comentário adicionado com sucesso!");
                     }
-                });
-            }
+                }
+            });
         }
     }
 
