@@ -588,3 +588,99 @@ a:hover {
     padding: 8px 12px; 
     font-size: 0.85em; 
 }
+
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    padding: 15px 20px;
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    font-size: 0.9em;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast.success {
+    background-color: #5cb85c;
+}
+
+.toast.error {
+    background-color: #D9534F; 
+}
+
+.toast.info {
+    background-color: #5bc0de; 
+}
+
+#modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+#modal-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-box {
+    background-color: var(--card-color);
+    padding: 30px;
+    border-radius: var(--border-radius);
+    width: 100%;
+    max-width: 350px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+#modal-overlay.show .modal-box {
+    transform: scale(1);
+}
+
+.modal-box h3 {
+    margin-top: 0;
+    font-size: 1.4em;
+}
+
+.modal-box p {
+    font-size: 1em;
+    opacity: 0.9;
+    margin-bottom: 30px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-actions .btn {
+    width: 100%;
+}
