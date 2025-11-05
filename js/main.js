@@ -2,13 +2,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function injetaNavbar() {
         const header = document.querySelector('.page-header');
-
         if (!header) {
             return;
         }
-
         const nomeUsuario = localStorage.getItem('usuarioLogado') || 'Visitante';
-
         const navbarHTML = `
             <div class="navbar-container">
                 <div class="user-menu">
@@ -20,84 +17,79 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
-
         header.insertAdjacentHTML('beforeend', navbarHTML);
     }
 
     document.addEventListener('click', function(event) {
         const dropdownMenu = document.querySelector('.dropdown-menu');
-        
         if (!dropdownMenu || !dropdownMenu.classList.contains('active')) {
             return;
         }
-
         const isClickOnIcon = event.target.matches('.user-icon');
         const isClickInsideMenu = dropdownMenu.contains(event.target);
-
         if (!isClickOnIcon && !isClickInsideMenu) {
             dropdownMenu.classList.remove('active');
         }
     });
 
-
     function setupDatabase() {
-    if (!localStorage.getItem('chamados')) {
-        const chamadosIniciais = [
-            { 
-                id: 1234, 
-                titulo: "Computador não liga", 
-                descricao: "Meu computador da mesa 5 não está ligando, a tela fica preta.", 
-                categoria: "hardware", 
-                status: "Em Progresso", 
-                departamento: "Hardware - Pedro Afonso",
-                prioridade: "Alta",
-                historico: [
-                    { data: "10/10/2025", autor: "Maria", acao: "Verificação inicial concluída." },
-                    { data: "11/10/2025", autor: "João (TI)", acao: "Em andamento." }
-                ]
-            },
-            { 
-                id: 1235, 
-                titulo: "Erro ao acessar sistema de Vendas", 
-                descricao: "O sistema de vendas XYZ está mostrando um erro '503' ao tentar logar.", 
-                categoria: "software", 
-                status: "Aberto", 
-                departamento: null,
-                prioridade: "Média",
-                historico: [
-                    { data: "12/10/2025", autor: "Sistema", acao: "Chamado aberto." }
-                ]
-            }, 
-            { 
-                id: 1236, 
-                titulo: "Impressora não funciona", 
-                descricao: "A impressora do segundo andar não está imprimindo os relatórios.", 
-                categoria: "hardware", 
-                status: "Aberto", 
-                departamento: null,
-                prioridade: "Baixa",
-                historico: [
-                     { data: "13/10/2025", autor: "Sistema", acao: "Chamado aberto." }
-                ]
-            }
-        ];
-        localStorage.setItem('chamados', JSON.stringify(chamadosIniciais));
-    }
+        if (!localStorage.getItem('chamados')) {
+            const chamadosIniciais = [
+                 { 
+                    id: 1234, 
+                    titulo: "Computador não liga", 
+                    descricao: "Meu computador da mesa 5 não está ligando, a tela fica preta.", 
+                    categoria: "hardware", 
+                    status: "Em Progresso", 
+                    departamento: "Hardware - Pedro Afonso",
+                    prioridade: "Alta",
+                    historico: [
+                        { data: "10/10/2025", autor: "Maria", acao: "Verificação inicial concluída." },
+                        { data: "11/10/2025", autor: "João (TI)", acao: "Em andamento." }
+                    ]
+                },
+                { 
+                    id: 1235, 
+                    titulo: "Erro ao acessar sistema de Vendas", 
+                    descricao: "O sistema de vendas XYZ está mostrando um erro '503' ao tentar logar.", 
+                    categoria: "software", 
+                    status: "Aberto", 
+                    departamento: null,
+                    prioridade: "Média",
+                    historico: [
+                        { data: "12/10/2025", autor: "Sistema", acao: "Chamado aberto." }
+                    ]
+                }, 
+                { 
+                    id: 1236, 
+                    titulo: "Impressora não funciona", 
+                    descricao: "A impressora do segundo andar não está imprimindo os relatórios.", 
+                    categoria: "hardware", 
+                    status: "Aberto", 
+                    departamento: null,
+                    prioridade: "Baixa",
+                    historico: [
+                         { data: "13/10/2025", autor: "Sistema", acao: "Chamado aberto." }
+                    ]
+                }
+            ];
+            localStorage.setItem('chamados', JSON.stringify(chamadosIniciais));
+        }
 
-    if (!localStorage.getItem('users')) {
+        if (!localStorage.getItem('users')) {
+            const adminUser = {
+                username: "adm",
+                nomeCompleto: "Administrador", 
+                email: "adm@admin.com",
+                password: "adm"
+            };
+            localStorage.setItem('users', JSON.stringify([adminUser]));
+        }
 
-        const adminUser = {
-            username: "adm",
-            email: "adm@admin.com",
-            password: "adm"
+        window.appData = {
+            departamentos: ["Hardware - Pedro Afonso", "Software - Carlos Eduardo Marinho", "Rede - Sandro Pinto", "Outros - Atendente Geral"]
         };
-        localStorage.setItem('users', JSON.stringify([adminUser]));
     }
-
-    window.appData = {
-        departamentos: ["Hardware - Pedro Afonso", "Software - Carlos Eduardo Marinho", "Rede - Sandro Pinto", "Outros - Atendente Geral"]
-    };
-}
 
     function initLoginPage() {
         const loginForm = document.querySelector('.login-box form');
@@ -107,21 +99,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 const username = document.getElementById('username').value;
                 const password = document.getElementById('password').value;
 
-                if (username === 'adm' && password === 'adm') {
-                    localStorage.setItem('usuarioLogado', username);
+                const users = JSON.parse(localStorage.getItem('users'));
+                const user = users.find(u => u.username === username && u.password === password);
+
+                if (user) {
+                    localStorage.setItem('usuarioLogado', user.nomeCompleto); 
                     
-                    console.log('Login de Administrador bem-sucedido!');
-                    window.location.href = 'dashboard-admin.html';
+                    if (user.username === 'adm') {
+                        console.log('Login de Administrador bem-sucedido!');
+                        window.location.href = 'dashboard-admin.html';
+                    } else {
+                        console.log('Login de Usuário Comum bem-sucedido!');
+                        window.location.href = 'dashboard.html';
+                    }
                 } else {
-                    localStorage.setItem('usuarioLogado', username); 
-                    
-                    console.log('Login de Usuário Comum simulado com sucesso!');
-                    window.location.href = 'dashboard.html';
+                    alert("Usuário ou senha incorretos. Tente novamente ou registre-se.");
                 }
             });
         }
     }
-
     function initAdminDashboard() {
         const adminTicketList = document.getElementById('admin-ticket-list');
         if (!adminTicketList) return;
@@ -283,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         const novoItemHistorico = {
                             data: dataFormatada,
-                            autor: "Usuário", 
+                            autor: localStorage.getItem('usuarioLogado') || "Usuário", 
                             acao: acao
                         };
                         
@@ -297,6 +293,47 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             }
+        }
+    }
+
+    function initRegistrarPage() {
+        const registrarForm = document.querySelector('#form-registrar');
+        if (registrarForm) {
+            registrarForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const username = document.getElementById('username').value;
+                const nomeCompleto = document.getElementById('nomeCompleto').value;
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const politica = document.getElementById('politica').checked;
+
+                if (!politica) {
+                    alert("Você precisa aceitar a Política de Usuário para se registrar.");
+                    return; 
+                }
+
+                const users = JSON.parse(localStorage.getItem('users'));
+                const usuarioExistente = users.find(u => u.username === username || u.email === email);
+
+                if (usuarioExistente) {
+                    alert("Este Login (Nome de usuário) ou Email já está em uso.");
+                    return;
+                }
+
+                const novoUsuario = {
+                    username: username,
+                    nomeCompleto: nomeCompleto,
+                    email: email,
+                    password: password 
+                };
+
+                users.push(novoUsuario);
+                localStorage.setItem('users', JSON.stringify(users));
+
+                alert("Conta criada com sucesso! Você será redirecionado para a página de login.");
+                window.location.href = 'index.html';
+            });
         }
     }
 
@@ -315,9 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (target.matches('.logout-link')) {
                 event.preventDefault(); 
-                
                 localStorage.removeItem('usuarioLogado'); 
-                
                 console.log('Usuário deslogado.');
                 window.location.href = 'index.html'; 
             }
@@ -349,18 +384,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
     
     setupDatabase();
-    
     injetaNavbar(); 
-    
-    bindGlobalNavigators(); 
+    bindGlobalNavigators();
 
     const path = window.location.pathname;
 
     if (path.endsWith('index.html') || path === '/') {
         initLoginPage();
+    } else if (path.endsWith('registrar.html')) { 
+        initRegistrarPage();
     } else if (path.endsWith('dashboard-admin.html')) {
         initAdminDashboard();
     } else if (path.endsWith('dashboard.html')) {
