@@ -296,6 +296,63 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function initEditarChamadoPage() {
+        const params = new URLSearchParams(window.location.search);
+        const ticketId = params.get('id');
+        const formEditarChamado = document.querySelector('#form-editar-chamado');
+
+        if (!ticketId || !formEditarChamado) {
+            console.error("ID do chamado ou formulário não encontrado.");
+            return;
+        }
+
+        const chamados = JSON.parse(localStorage.getItem('chamados'));
+        const chamadoParaEditar = chamados.find(c => c.id == ticketId);
+
+        if (!chamadoParaEditar) {
+            alert("Chamado não encontrado!");
+            window.location.href = 'dashboard.html';
+            return;
+        }
+
+        document.getElementById('titulo').value = chamadoParaEditar.titulo;
+        document.getElementById('descricao').value = chamadoParaEditar.descricao;
+        document.getElementById('categoria').value = chamadoParaEditar.categoria;
+
+        formEditarChamado.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const tituloAtualizado = document.getElementById('titulo').value;
+            const descricaoAtualizada = document.getElementById('descricao').value;
+            const categoriaAtualizada = document.getElementById('categoria').value;
+
+            const chamadosAtualizados = chamados.map(chamado => {
+                if (chamado.id == ticketId) {
+                    
+                    const novoItemHistorico = {
+                        data: new Date().toLocaleDateString('pt-BR'),
+                        autor: localStorage.getItem('usuarioLogado') || "Usuário",
+                        acao: "Dados do chamado foram editados."
+                    };
+
+                    return {
+                        ...chamado, 
+                        titulo: tituloAtualizado,
+                        descricao: descricaoAtualizada,
+                        categoria: categoriaAtualizada,
+                        historico: [...chamado.historico, novoItemHistorico] 
+                    };
+                }
+                return chamado; 
+            });
+
+            localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
+
+            alert("Chamado atualizado com sucesso!");
+            window.location.href = 'dashboard.html';
+        });
+    }
+
     function initRegistrarPage() {
         const registrarForm = document.querySelector('#form-registrar');
         if (registrarForm) {
@@ -401,9 +458,11 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (path.endsWith('dashboard.html')) {
         initUserDashboard();
     } else if (path.endsWith('abrir-chamado.html')) {
-        initAbrirChamadoForm();
-    } else if (path.endsWith('detalhes-chamado.html')) {
-        initDetalhesPage();
-    }
+        initAbrirChamadoForm();
+    } else if (path.endsWith('editar-chamado.html')) { 
+        initEditarChamadoPage(); 
+    } else if (path.endsWith('detalhes-chamado.html')) {
+        initDetalhesPage();
+    }
     
 });
