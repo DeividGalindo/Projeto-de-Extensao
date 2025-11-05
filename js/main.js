@@ -1,5 +1,72 @@
 document.addEventListener('DOMContentLoaded', function() {
 
+    function injectNotificationContainers() {
+        const toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        document.body.appendChild(toastContainer);
+
+        const modalHTML = `
+            <div id="modal-overlay">
+                <div class="modal-box">
+                    <h3 id="modal-title">Confirmação</h3>
+                    <p id="modal-message">Você tem certeza?</p>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" id="modal-btn-cancel">Cancelar</button>
+                        <button class="btn btn-danger" id="modal-btn-confirm">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10); 
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    container.removeChild(toast);
+                }
+            }, 500); 
+        }, 3000);
+    }
+
+    function showConfirmModal(message, onConfirm) {
+        const overlay = document.getElementById('modal-overlay');
+        const messageEl = document.getElementById('modal-message');
+        const btnConfirm = document.getElementById('modal-btn-confirm');
+        const btnCancel = document.getElementById('modal-btn-cancel');
+
+        messageEl.textContent = message;
+        overlay.classList.add('show');
+
+        btnConfirm.replaceWith(btnConfirm.cloneNode(true));
+        btnCancel.replaceWith(btnCancel.cloneNode(true));
+
+        const newBtnConfirm = document.getElementById('modal-btn-confirm');
+        const newBtnCancel = document.getElementById('modal-btn-cancel');
+
+        newBtnConfirm.addEventListener('click', () => {
+            onConfirm(); 
+            overlay.classList.remove('show');
+        });
+
+        newBtnCancel.addEventListener('click', () => {
+            overlay.classList.remove('show');
+        });
+    }
+
     function injetaNavbar() {
         const header = document.querySelector('.page-header');
         if (!header) {
@@ -35,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function setupDatabase() {
         if (!localStorage.getItem('chamados')) {
             const chamadosIniciais = [
-                 { 
+                { 
                     id: 1234, 
                     titulo: "Computador não liga", 
                     descricao: "Meu computador da mesa 5 não está ligando, a tela fica preta.", 
@@ -113,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         window.location.href = 'dashboard.html';
                     }
                 } else {
-                    alert("Usuário ou senha incorretos. Tente novamente ou registre-se.");
+                    showToast("Usuário ou senha incorretos.", "error");
                 }
             });
         }
@@ -134,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
         chamados.forEach(chamado => {
             const ticketCard = document.createElement('div');
             ticketCard.className = 'ticket-card card';
-            ticketCard.dataset.id = chamado.id; 
+            ticketCard.dataset.id = chamado.id;
 
             let deptoOptionsHTML = '<option value="null">Nenhum</option>';
             departamentos.forEach(depto => {
@@ -154,7 +221,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 prioridadeOptionsHTML += `<option value="${prioridade}" ${isSelected}>${prioridade}</option>`;
             });
 
-
             ticketCard.innerHTML = `
                 <div class="ticket-info">
                     <h4>Chamado #${chamado.id} - ${chamado.titulo}</h4>
@@ -167,14 +233,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             ${deptoOptionsHTML}
                         </select>
                     </div>
-
                     <div>
                         <label for="status-${chamado.id}">Mudar Status:</label>
                         <select id="status-${chamado.id}" class="status-select admin-select" data-id="${chamado.id}">
                             ${statusOptionsHTML}
                         </select>
                     </div>
-
                     <div>
                         <label for="prioridade-${chamado.id}">Mudar Prioridade:</label>
                         <select id="prioridade-${chamado.id}" class="prioridade-select admin-select" data-id="${chamado.id}">
@@ -186,10 +250,9 @@ document.addEventListener('DOMContentLoaded', function() {
             adminTicketList.appendChild(ticketCard);
         });
         
-
         function salvarAlteracao(ticketId, campo, valor, nomeCampo) {
             const chamadosAtuais = JSON.parse(localStorage.getItem('chamados'));
-            const adminUser = localStorage.getItem('usuarioLogado') || "Admin";
+            const adminUser = localStorage.getItem('usuarioLogado') || "Admin"; 
             
             const chamadosAtualizados = chamadosAtuais.map(chamado => {
                 if (chamado.id == ticketId) {
@@ -198,7 +261,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         autor: adminUser,
                         acao: `${nomeCampo} alterado para "${valor || 'Nenhum'}".`
                     };
-                    
                     return {
                         ...chamado,
                         [campo]: valor === 'null' ? null : valor, 
@@ -211,6 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
             console.log(`Chamado #${ticketId} teve o campo ${campo} alterado para ${valor}`);
             
+            showToast(`${nomeCampo} do chamado #${ticketId} atualizado!`, "success");
             initAdminDashboard(); 
         }
 
@@ -303,9 +366,64 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('chamados', JSON.stringify(chamados));
                 
                 console.log('Novo chamado salvo!', novoChamado);
-                window.location.href = 'confirmacao.html';
+                
+                window.location.href = 'confirmacao.html'; 
             });
         }
+    }
+
+    function initEditarChamadoPage() {
+        const params = new URLSearchParams(window.location.search);
+        const ticketId = params.get('id');
+        const formEditarChamado = document.querySelector('#form-editar-chamado');
+
+        if (!ticketId || !formEditarChamado) {
+            console.error("ID do chamado ou formulário não encontrado.");
+            return;
+        }
+
+        const chamados = JSON.parse(localStorage.getItem('chamados'));
+        const chamadoParaEditar = chamados.find(c => c.id == ticketId);
+
+        if (!chamadoParaEditar) {
+            showToast("Chamado não encontrado!", "error");
+            window.location.href = 'dashboard.html';
+            return;
+        }
+
+        document.getElementById('titulo').value = chamadoParaEditar.titulo;
+        document.getElementById('descricao').value = chamadoParaEditar.descricao;
+        document.getElementById('categoria').value = chamadoParaEditar.categoria;
+
+        formEditarChamado.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const tituloAtualizado = document.getElementById('titulo').value;
+            const descricaoAtualizada = document.getElementById('descricao').value;
+            const categoriaAtualizada = document.getElementById('categoria').value;
+
+            const chamadosAtualizados = chamados.map(chamado => {
+                if (chamado.id == ticketId) {
+                    const novoItemHistorico = {
+                        data: new Date().toLocaleDateString('pt-BR'),
+                        autor: localStorage.getItem('usuarioLogado') || "Usuário",
+                        acao: "Dados do chamado foram editados."
+                    };
+                    return {
+                        ...chamado,
+                        titulo: tituloAtualizado,
+                        descricao: descricaoAtualizada,
+                        categoria: categoriaAtualizada,
+                        historico: [...chamado.historico, novoItemHistorico]
+                    };
+                }
+                return chamado;
+            });
+
+            localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
+
+            window.location.href = 'dashboard.html';
+        });
     }
 
     function initDetalhesPage() {
@@ -318,7 +436,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const chamado = chamados.find(c => c.id == ticketId);
 
         if (!chamado) {
-            alert("Chamado não encontrado.");
+            showToast("Chamado não encontrado.", "error"); 
             window.location.href = "dashboard.html";
             return;
         }
@@ -333,7 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const historyList = document.getElementById('detalhes-historico');
         
         function renderizarHistorico() {
-            historyList.innerHTML = '';  
+            historyList.innerHTML = ''; 
             if (chamado.historico && chamado.historico.length > 0) {
                 chamado.historico.forEach(item => {
                     const li = document.createElement('li');
@@ -345,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        renderizarHistorico(); 
+        renderizarHistorico();
 
         const commentForm = document.getElementById('form-add-comment');
         if (commentForm) {
@@ -367,81 +485,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     const chamadoIndex = chamados.findIndex(c => c.id == ticketId);
                     if (chamadoIndex > -1) {
                         chamados[chamadoIndex].historico.push(novoItemHistorico);
-                        
                         localStorage.setItem('chamados', JSON.stringify(chamados));
                         
                         const li = document.createElement('li');
                         li.innerHTML = `<strong>[${novoItemHistorico.data}]</strong> - Atualização realizada por ${novoItemHistorico.autor}: ${novoItemHistorico.acao}`;
                         historyList.appendChild(li);
-                        
                         commentTextarea.value = '';
                         
                         if (historyList.querySelector('li').textContent === "Nenhuma atualização registrada.") {
                              historyList.querySelector('li').remove();
                         }
 
-                        alert("Comentário adicionado com sucesso!");
+                        showToast("Comentário adicionado!", "success");
                     }
                 }
             });
         }
-    }
-
-    function initEditarChamadoPage() {
-        const params = new URLSearchParams(window.location.search);
-        const ticketId = params.get('id');
-        const formEditarChamado = document.querySelector('#form-editar-chamado');
-
-        if (!ticketId || !formEditarChamado) {
-            console.error("ID do chamado ou formulário não encontrado.");
-            return;
-        }
-
-        const chamados = JSON.parse(localStorage.getItem('chamados'));
-        const chamadoParaEditar = chamados.find(c => c.id == ticketId);
-
-        if (!chamadoParaEditar) {
-            alert("Chamado não encontrado!");
-            window.location.href = 'dashboard.html';
-            return;
-        }
-
-        document.getElementById('titulo').value = chamadoParaEditar.titulo;
-        document.getElementById('descricao').value = chamadoParaEditar.descricao;
-        document.getElementById('categoria').value = chamadoParaEditar.categoria;
-
-        formEditarChamado.addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            const tituloAtualizado = document.getElementById('titulo').value;
-            const descricaoAtualizada = document.getElementById('descricao').value;
-            const categoriaAtualizada = document.getElementById('categoria').value;
-
-            const chamadosAtualizados = chamados.map(chamado => {
-                if (chamado.id == ticketId) {
-                    
-                    const novoItemHistorico = {
-                        data: new Date().toLocaleDateString('pt-BR'),
-                        autor: localStorage.getItem('usuarioLogado') || "Usuário",
-                        acao: "Dados do chamado foram editados."
-                    };
-
-                    return {
-                        ...chamado, 
-                        titulo: tituloAtualizado,
-                        descricao: descricaoAtualizada,
-                        categoria: categoriaAtualizada,
-                        historico: [...chamado.historico, novoItemHistorico] 
-                    };
-                }
-                return chamado; 
-            });
-
-            localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
-
-            alert("Chamado atualizado com sucesso!");
-            window.location.href = 'dashboard.html';
-        });
     }
 
     function initRegistrarPage() {
@@ -457,7 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const politica = document.getElementById('politica').checked;
 
                 if (!politica) {
-                    alert("Você precisa aceitar a Política de Usuário para se registrar.");
+                    showToast("Você precisa aceitar a Política de Usuário.", "error");
                     return; 
                 }
 
@@ -465,7 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const usuarioExistente = users.find(u => u.username === username || u.email === email);
 
                 if (usuarioExistente) {
-                    alert("Este Login (Nome de usuário) ou Email já está em uso.");
+                    showToast("Este Login (Nome de usuário) ou Email já está em uso.", "error");
                     return;
                 }
 
@@ -485,12 +544,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-
     function bindGlobalNavigators() {
         document.body.addEventListener('click', function(event) {
             const target = event.target; 
-
-            
             
             if (target.matches('.user-icon')) {
                 event.stopPropagation();
@@ -499,14 +555,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     dropdownMenu.classList.toggle('active');
                 }
             }
-
-            
             
             if (target.matches('.logout-link')) {
                 event.preventDefault(); 
                 localStorage.removeItem('usuarioLogado'); 
-                console.log('Usuário deslogado.');
-                window.location.href = 'index.html'; 
+                showToast("Você foi desconectado.", "info"); 
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html'; 
+                }, 1500);
             }
             
             if (target.matches('.summary-card .btn-accent')) {
@@ -519,31 +576,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (target.classList.contains('btn-editar-chamado')) {
-                const ticketId = target.dataset.id;
-                window.location.href = `editar-chamado.html?id=${ticketId}`;
-            }
+                 const ticketId = target.dataset.id;
+                 window.location.href = `editar-chamado.html?id=${ticketId}`;
+            }
 
             if (target.classList.contains('btn-excluir-chamado')) {
-                const ticketId = target.dataset.id;
-                
-             if (confirm("Tem certeza que deseja excluir este chamado?\nEsta ação não pode ser desfeita.")) {
-                    
-                let chamados = JSON.parse(localStorage.getItem('chamados'));
-                    
-                 const chamadosAtualizados = chamados.filter(chamado => {
-                        
-              return chamado.id != ticketId; 
-            });
-
-                    localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
-                    
-                    alert("Chamado excluído com sucesso.");
-                    window.location.reload();
-                }
-            }
+                const ticketId = target.dataset.id;
+                
+                showConfirmModal("Tem certeza que deseja excluir este chamado? Esta ação não pode ser desfeita.", function() {
+                    let chamados = JSON.parse(localStorage.getItem('chamados'));
+                    const chamadosAtualizados = chamados.filter(chamado => chamado.id != ticketId);
+                    localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
+                    
+                    showToast("Chamado excluído com sucesso.", "success");
+                    
+                    target.closest('.ticket-card').remove();
+                    initUserDashboard(); 
+                });
+            }
 
             if (target.matches('#form-abrir-chamado .btn-secondary')) {
-                 alert("Funcionalidade 'Adicionar Anexos' ainda não implementada.");
+                 showToast("Funcionalidade 'Adicionar Anexos' ainda não implementada.", "info");
             }
 
             const id = target.id;
@@ -556,12 +609,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
-    setupDatabase();
-    injetaNavbar(); 
-    bindGlobalNavigators();
 
-    const path = window.location.pathname;
+    
+    setupDatabase(); 
+    
+    injectNotificationContainers(); 
+    injetaNavbar(); 
+    
+    bindGlobalNavigators(); 
+
+    const path = window.location.pathname; 
 
     if (path.endsWith('index.html') || path === '/') {
         initLoginPage();
@@ -572,11 +629,11 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (path.endsWith('dashboard.html')) {
         initUserDashboard();
     } else if (path.endsWith('abrir-chamado.html')) {
-        initAbrirChamadoForm();
-    } else if (path.endsWith('editar-chamado.html')) { 
-        initEditarChamadoPage(); 
-    } else if (path.endsWith('detalhes-chamado.html')) {
-        initDetalhesPage();
-    }
+        initAbrirChamadoForm();
+    } else if (path.endsWith('editar-chamado.html')) { 
+        initEditarChamadoPage();
+    } else if (path.endsWith('detalhes-chamado.html')) {
+        initDetalhesPage();
+    }
     
 });
