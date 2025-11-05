@@ -489,6 +489,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function bindGlobalNavigators() {
         document.body.addEventListener('click', function(event) {
             const target = event.target; 
+
+            
             
             if (target.matches('.user-icon')) {
                 event.stopPropagation();
@@ -497,6 +499,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     dropdownMenu.classList.toggle('active');
                 }
             }
+
+            
             
             if (target.matches('.logout-link')) {
                 event.preventDefault(); 
@@ -517,6 +521,25 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target.classList.contains('btn-editar-chamado')) {
                 const ticketId = target.dataset.id;
                 window.location.href = `editar-chamado.html?id=${ticketId}`;
+            }
+
+            if (target.classList.contains('btn-excluir-chamado')) {
+                const ticketId = target.dataset.id;
+                
+             if (confirm("Tem certeza que deseja excluir este chamado?\nEsta ação não pode ser desfeita.")) {
+                    
+                let chamados = JSON.parse(localStorage.getItem('chamados'));
+                    
+                 const chamadosAtualizados = chamados.filter(chamado => {
+                        
+              return chamado.id != ticketId; 
+            });
+
+                    localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
+                    
+                    alert("Chamado excluído com sucesso.");
+                    window.location.reload();
+                }
             }
 
             if (target.matches('#form-abrir-chamado .btn-secondary')) {
