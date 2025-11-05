@@ -547,3 +547,30 @@ a:hover {
     font-family: 'Poppins', sans-serif;
     box-sizing: border-box;
 }
+
+
+.comment-form-card {
+    margin-top: 20px;
+}
+
+#form-add-comment .input-group {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+#form-add-comment textarea {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    background-color: var(--input-color);
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    font-size: 1em;
+    font-family: 'Poppins', sans-serif;
+    box-sizing: border-box;
+    resize: vertical; 
+}
+
+#btn-retornar-painel {
+    margin-top: 20px;
+}
