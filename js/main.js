@@ -118,25 +118,42 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
     function initAdminDashboard() {
         const adminTicketList = document.getElementById('admin-ticket-list');
         if (!adminTicketList) return;
 
         const chamados = JSON.parse(localStorage.getItem('chamados'));
         const departamentos = window.appData.departamentos;
+        
+        const statusList = ["Aberto", "Em Progresso", "Fechado"];
+        const prioridadeList = ["Baixa", "Média", "Alta", "Não definida"];
 
         adminTicketList.innerHTML = ''; 
 
         chamados.forEach(chamado => {
             const ticketCard = document.createElement('div');
             ticketCard.className = 'ticket-card card';
-            ticketCard.dataset.id = chamado.id;
+            ticketCard.dataset.id = chamado.id; 
 
-            let optionsHTML = '<option value="null">Nenhum</option>';
+            let deptoOptionsHTML = '<option value="null">Nenhum</option>';
             departamentos.forEach(depto => {
                 const isSelected = chamado.departamento === depto ? 'selected' : '';
-                optionsHTML += `<option value="${depto}" ${isSelected}>${depto}</option>`;
+                deptoOptionsHTML += `<option value="${depto}" ${isSelected}>${depto}</option>`;
             });
+
+            let statusOptionsHTML = '';
+            statusList.forEach(status => {
+                const isSelected = chamado.status === status ? 'selected' : '';
+                statusOptionsHTML += `<option value="${status}" ${isSelected}>${status}</option>`;
+            });
+
+            let prioridadeOptionsHTML = '';
+            prioridadeList.forEach(prioridade => {
+                const isSelected = chamado.prioridade === prioridade ? 'selected' : '';
+                prioridadeOptionsHTML += `<option value="${prioridade}" ${isSelected}>${prioridade}</option>`;
+            });
+
 
             ticketCard.innerHTML = `
                 <div class="ticket-info">
@@ -144,29 +161,80 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p>Status: <span class="status ${chamado.status.toLowerCase().replace(' ', '-')}">${chamado.status}</span></p>
                 </div>
                 <div class="assignment-controls">
-                    <label for="depto-${chamado.id}">Designar para:</label>
-                    <select id="depto-${chamado.id}" class="departamento-select">
-                        ${optionsHTML}
-                    </select>
+                    <div>
+                        <label for="depto-${chamado.id}">Designar para:</label>
+                        <select id="depto-${chamado.id}" class="departamento-select admin-select" data-id="${chamado.id}">
+                            ${deptoOptionsHTML}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="status-${chamado.id}">Mudar Status:</label>
+                        <select id="status-${chamado.id}" class="status-select admin-select" data-id="${chamado.id}">
+                            ${statusOptionsHTML}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="prioridade-${chamado.id}">Mudar Prioridade:</label>
+                        <select id="prioridade-${chamado.id}" class="prioridade-select admin-select" data-id="${chamado.id}">
+                            ${prioridadeOptionsHTML}
+                        </select>
+                    </div>
                 </div>
             `;
             adminTicketList.appendChild(ticketCard);
         });
         
+
+        function salvarAlteracao(ticketId, campo, valor, nomeCampo) {
+            const chamadosAtuais = JSON.parse(localStorage.getItem('chamados'));
+            const adminUser = localStorage.getItem('usuarioLogado') || "Admin";
+            
+            const chamadosAtualizados = chamadosAtuais.map(chamado => {
+                if (chamado.id == ticketId) {
+                    const novoItemHistorico = {
+                        data: new Date().toLocaleDateString('pt-BR'),
+                        autor: adminUser,
+                        acao: `${nomeCampo} alterado para "${valor || 'Nenhum'}".`
+                    };
+                    
+                    return {
+                        ...chamado,
+                        [campo]: valor === 'null' ? null : valor, 
+                        historico: [...chamado.historico, novoItemHistorico] 
+                    };
+                }
+                return chamado;
+            });
+
+            localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
+            console.log(`Chamado #${ticketId} teve o campo ${campo} alterado para ${valor}`);
+            
+            initAdminDashboard(); 
+        }
+
         document.querySelectorAll('.departamento-select').forEach(select => {
             select.addEventListener('change', function(event) {
-                const selectedDepartment = event.target.value;
-                const ticketId = event.target.closest('.ticket-card').dataset.id;
-                
-                const chamadosAtualizados = JSON.parse(localStorage.getItem('chamados')).map(chamado => {
-                    if (chamado.id == ticketId) {
-                        chamado.departamento = selectedDepartment === 'null' ? null : selectedDepartment;
-                    }
-                    return chamado;
-                });
+                const ticketId = event.target.dataset.id;
+                const valor = event.target.value;
+                salvarAlteracao(ticketId, 'departamento', valor, 'Departamento');
+            });
+        });
 
-                localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
-                console.log(`Chamado #${ticketId} designado para ${selectedDepartment}`);
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.addEventListener('change', function(event) {
+                const ticketId = event.target.dataset.id;
+                const valor = event.target.value;
+                salvarAlteracao(ticketId, 'status', valor, 'Status');
+            });
+        });
+
+        document.querySelectorAll('.prioridade-select').forEach(select => {
+            select.addEventListener('change', function(event) {
+                const ticketId = event.target.dataset.id;
+                const valor = event.target.value;
+                salvarAlteracao(ticketId, 'prioridade', valor, 'Prioridade');
             });
         });
     }
