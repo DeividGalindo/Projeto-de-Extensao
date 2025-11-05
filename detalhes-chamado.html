@@ -34,10 +34,18 @@
                 </ul>
             </section>
 
-            <div class="page-actions">
-                <button class="btn btn-accent">Adicionar Comentário</button>
-                <button class="btn btn-primary" id="btn-retornar-painel">Retornar ao Painel do Solicitante</button>
-            </div>
+            <section class="card comment-form-card">
+            <h3>Adicionar Comentário</h3>
+            <form id="form-add-comment">
+                <div class="input-group">
+                    <label for="novo-comentario">Sua mensagem:</label>
+                    <textarea id="novo-comentario" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-accent">Enviar Comentário</button>
+            </form>
+        </section>
+
+        <button class="btn btn-primary" id="btn-retornar-painel">Retornar ao Painel do Solicitante</button>
         </main>
     </div>
     <script src="js/main.js"></script> 
