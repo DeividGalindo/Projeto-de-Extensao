@@ -1,37 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    function injetaNavbar() {
-        const header = document.querySelector('.page-header');
-        if (!header) {
-            return;
-        }
-        const nomeUsuario = localStorage.getItem('usuarioLogado') || 'Visitante';
-        const navbarHTML = `
-            <div class="navbar-container">
-                <div class="user-menu">
-                    <img src="img/fundo.jpg" alt="Ícone do Usuário" class="user-icon">
-                    <div class="dropdown-menu">
-                        <span class="user-name">${nomeUsuario}</span>
-                        <a href="#" class="logout-link">Logout</a>
-                    </div>
-                </div>
-            </div>
-        `;
-        header.insertAdjacentHTML('beforeend', navbarHTML);
-    }
-
-    document.addEventListener('click', function(event) {
-        const dropdownMenu = document.querySelector('.dropdown-menu');
-        if (!dropdownMenu || !dropdownMenu.classList.contains('active')) {
-            return;
-        }
-        const isClickOnIcon = event.target.matches('.user-icon');
-        const isClickInsideMenu = dropdownMenu.contains(event.target);
-        if (!isClickOnIcon && !isClickInsideMenu) {
-            dropdownMenu.classList.remove('active');
-        }
-    });
-
+    // --- 1. SIMULAÇÃO DE BANCO DE DADOS (localStorage) ---
+    // Esta função é executada primeiro para garantir que os dados existam.
     function setupDatabase() {
         if (!localStorage.getItem('chamados')) {
             const chamadosIniciais = [
@@ -76,16 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('chamados', JSON.stringify(chamadosIniciais));
         }
 
-        if (!localStorage.getItem('users')) {
-            const adminUser = {
-                username: "adm",
-                nomeCompleto: "Administrador", 
-                email: "adm@admin.com",
-                password: "adm"
-            };
-            localStorage.setItem('users', JSON.stringify([adminUser]));
-        }
-
+        // Lista de departamentos disponíveis
         window.appData = {
             departamentos: ["Hardware - Pedro Afonso", "Software - Carlos Eduardo Marinho", "Rede - Sandro Pinto", "Outros - Atendente Geral"]
         };
@@ -99,25 +60,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 const username = document.getElementById('username').value;
                 const password = document.getElementById('password').value;
 
-                const users = JSON.parse(localStorage.getItem('users'));
-                const user = users.find(u => u.username === username && u.password === password);
-
-                if (user) {
-                    localStorage.setItem('usuarioLogado', user.nomeCompleto); 
-                    
-                    if (user.username === 'adm') {
-                        console.log('Login de Administrador bem-sucedido!');
-                        window.location.href = 'dashboard-admin.html';
-                    } else {
-                        console.log('Login de Usuário Comum bem-sucedido!');
-                        window.location.href = 'dashboard.html';
-                    }
+                if (username === 'adm' && password === 'adm') {
+                    console.log('Login de Administrador bem-sucedido!');
+                    window.location.href = 'dashboard-admin.html';
                 } else {
-                    alert("Usuário ou senha incorretos. Tente novamente ou registre-se.");
+                    console.log('Login de Usuário Comum simulado com sucesso!');
+                    window.location.href = 'dashboard.html';
                 }
             });
         }
     }
+
+    // --- 3. LÓGICA DO PAINEL DO ADMIN (dashboard-admin.html) ---
     function initAdminDashboard() {
         const adminTicketList = document.getElementById('admin-ticket-list');
         if (!adminTicketList) return;
@@ -279,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         const novoItemHistorico = {
                             data: dataFormatada,
-                            autor: localStorage.getItem('usuarioLogado') || "Usuário", 
+                            autor: "Usuário", // Simulado. Numa app real, seria o nome do usuário logado.
                             acao: acao
                         };
                         
@@ -296,67 +250,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function initRegistrarPage() {
-        const registrarForm = document.querySelector('#form-registrar');
-        if (registrarForm) {
-            registrarForm.addEventListener('submit', function(event) {
-                event.preventDefault();
 
-                const username = document.getElementById('username').value;
-                const nomeCompleto = document.getElementById('nomeCompleto').value;
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                const politica = document.getElementById('politica').checked;
-
-                if (!politica) {
-                    alert("Você precisa aceitar a Política de Usuário para se registrar.");
-                    return; 
-                }
-
-                const users = JSON.parse(localStorage.getItem('users'));
-                const usuarioExistente = users.find(u => u.username === username || u.email === email);
-
-                if (usuarioExistente) {
-                    alert("Este Login (Nome de usuário) ou Email já está em uso.");
-                    return;
-                }
-
-                const novoUsuario = {
-                    username: username,
-                    nomeCompleto: nomeCompleto,
-                    email: email,
-                    password: password 
-                };
-
-                users.push(novoUsuario);
-                localStorage.setItem('users', JSON.stringify(users));
-
-                alert("Conta criada com sucesso! Você será redirecionado para a página de login.");
-                window.location.href = 'index.html';
-            });
-        }
-    }
-
-
+    // --- 7. LÓGICA DE NAVEGAÇÃO GLOBAL (Para todos os botões) ---
+    // Usa "event delegation" para gerenciar todos os cliques em um só lugar.
     function bindGlobalNavigators() {
         document.body.addEventListener('click', function(event) {
-            const target = event.target; 
+            const target = event.target; // O elemento que foi clicado
             
-            if (target.matches('.user-icon')) {
-                event.stopPropagation();
-                const dropdownMenu = target.nextElementSibling;
-                if (dropdownMenu) {
-                    dropdownMenu.classList.toggle('active');
-                }
-            }
-            
-            if (target.matches('.logout-link')) {
-                event.preventDefault(); 
-                localStorage.removeItem('usuarioLogado'); 
-                console.log('Usuário deslogado.');
-                window.location.href = 'index.html'; 
-            }
-            
+            // Botão "Abrir Novo Chamado" (do dashboard.html)
             if (target.matches('.summary-card .btn-accent')) {
                 window.location.href = 'abrir-chamado.html';
             }
@@ -384,10 +285,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // --- ROTEADOR PRINCIPAL ---
+    // Executa as funções corretas com base na página atual.
     
-    setupDatabase();
-    injetaNavbar(); 
-    bindGlobalNavigators();
+    setupDatabase(); // 1º - Garante que o "banco de dados" existe
+    bindGlobalNavigators(); // 2º - Ativa todos os botões de navegação e placeholders
 
     const path = window.location.pathname;
 
