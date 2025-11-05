@@ -7,12 +7,15 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        const nomeUsuario = localStorage.getItem('usuarioLogado') || 'Visitante';
+
         const navbarHTML = `
             <div class="navbar-container">
                 <div class="user-menu">
                     <img src="img/icone_usuario.png" alt="Ícone do Usuário" class="user-icon">
                     <div class="dropdown-menu">
-                        <span class="user-name">Usuário Logado</span> <a href="index.html" class="logout-link">Logout</a>
+                        <span class="user-name">${nomeUsuario}</span>
+                        <a href="#" class="logout-link">Logout</a>
                     </div>
                 </div>
             </div>
@@ -35,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dropdownMenu.classList.remove('active');
         }
     });
+
 
     function setupDatabase() {
         if (!localStorage.getItem('chamados')) {
@@ -94,9 +98,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const password = document.getElementById('password').value;
 
                 if (username === 'adm' && password === 'adm') {
+                    localStorage.setItem('usuarioLogado', username);
+                    
                     console.log('Login de Administrador bem-sucedido!');
                     window.location.href = 'dashboard-admin.html';
                 } else {
+                    localStorage.setItem('usuarioLogado', username); 
+                    
                     console.log('Login de Usuário Comum simulado com sucesso!');
                     window.location.href = 'dashboard.html';
                 }
@@ -282,6 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+
     function bindGlobalNavigators() {
         document.body.addEventListener('click', function(event) {
             const target = event.target; 
@@ -292,6 +301,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (dropdownMenu) {
                     dropdownMenu.classList.toggle('active');
                 }
+            }
+            
+            if (target.matches('.logout-link')) {
+                event.preventDefault(); 
+                
+                localStorage.removeItem('usuarioLogado'); 
+                
+                console.log('Usuário deslogado.');
+                window.location.href = 'index.html'; 
             }
             
             if (target.matches('.summary-card .btn-accent')) {
