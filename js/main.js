@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         setTimeout(() => {
             toast.classList.add('show');
-        }, 10); 
+        }, 10);
 
         setTimeout(() => {
             toast.classList.remove('show');
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (toast.parentElement) {
                     container.removeChild(toast);
                 }
-            }, 500); 
+            }, 500);
         }, 3000);
     }
 
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const newBtnCancel = document.getElementById('modal-btn-cancel');
 
         newBtnConfirm.addEventListener('click', () => {
-            onConfirm(); 
+            onConfirm();
             overlay.classList.remove('show');
         });
 
@@ -366,7 +366,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('chamados', JSON.stringify(chamados));
                 
                 console.log('Novo chamado salvo!', novoChamado);
-                
                 window.location.href = 'confirmacao.html'; 
             });
         }
@@ -422,6 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
 
+            alert("Chamado atualizado com sucesso!");
             window.location.href = 'dashboard.html';
         });
     }
@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const chamado = chamados.find(c => c.id == ticketId);
 
         if (!chamado) {
-            showToast("Chamado não encontrado.", "error"); 
+            showToast("Chamado não encontrado.", "error");
             window.location.href = "dashboard.html";
             return;
         }
@@ -544,6 +544,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+
     function bindGlobalNavigators() {
         document.body.addEventListener('click', function(event) {
             const target = event.target; 
@@ -559,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target.matches('.logout-link')) {
                 event.preventDefault(); 
                 localStorage.removeItem('usuarioLogado'); 
-                showToast("Você foi desconectado.", "info"); 
+                showToast("Você foi desconectado.", "info");
                 
                 setTimeout(() => {
                     window.location.href = 'index.html'; 
@@ -591,7 +592,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     showToast("Chamado excluído com sucesso.", "success");
                     
                     target.closest('.ticket-card').remove();
-                    initUserDashboard(); 
+                    
+                    const summaryCount = document.querySelector('.summary-details span');
+                    if (summaryCount) {
+                        const chamadosAbertos = chamadosAtualizados.filter(c => c.status === 'Aberto').length;
+                        summaryCount.textContent = chamadosAbertos;
+                    }
                 });
             }
 
@@ -611,7 +617,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     
-    setupDatabase(); 
+    setupDatabase();
     
     injectNotificationContainers(); 
     injetaNavbar(); 
