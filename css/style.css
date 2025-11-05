@@ -574,3 +574,17 @@ a:hover {
 #btn-retornar-painel {
     margin-top: 20px;
 }
+
+.btn-danger {
+    background-color: #D9534F;
+    color: var(--text-color);
+}
+
+.btn-danger:hover {
+    background-color: #C9302C;
+}
+
+.ticket-actions .btn {
+    padding: 8px 12px; 
+    font-size: 0.85em; 
+}
