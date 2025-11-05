@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
+        if (!container) return;
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.textContent = message;
@@ -47,6 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const messageEl = document.getElementById('modal-message');
         const btnConfirm = document.getElementById('modal-btn-confirm');
         const btnCancel = document.getElementById('modal-btn-cancel');
+
+        if (!overlay || !messageEl || !btnConfirm || !btnCancel) return;
 
         messageEl.textContent = message;
         overlay.classList.add('show');
@@ -188,7 +191,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initAdminDashboard() {
         const adminTicketList = document.getElementById('admin-ticket-list');
+        const searchInput = document.getElementById('campo-busca-admin');
+        
         if (!adminTicketList) return;
+
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
 
         const chamados = JSON.parse(localStorage.getItem('chamados'));
         const departamentos = window.appData.departamentos;
@@ -196,9 +203,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const statusList = ["Aberto", "Em Progresso", "Fechado"];
         const prioridadeList = ["Baixa", "Média", "Alta", "Não definida"];
 
+        const chamadosFiltrados = chamados.filter(chamado => {
+            const titulo = chamado.titulo.toLowerCase();
+            const id = chamado.id.toString();
+            return titulo.includes(searchTerm) || id.includes(searchTerm);
+        });
+
         adminTicketList.innerHTML = ''; 
 
-        chamados.forEach(chamado => {
+        if (chamadosFiltrados.length === 0) {
+            adminTicketList.innerHTML = '<p>Nenhum chamado encontrado.</p>';
+        }
+
+        chamadosFiltrados.forEach(chamado => {
             const ticketCard = document.createElement('div');
             ticketCard.className = 'ticket-card card';
             ticketCard.dataset.id = chamado.id;
@@ -303,13 +320,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function initUserDashboard() {
-        const userTicketList = document.querySelector('.tickets-section');
+        const userTicketList = document.getElementById('user-ticket-list');
         const summaryCount = document.querySelector('.summary-details span');
+        const searchInput = document.getElementById('campo-busca-user');
         
         if (!userTicketList) return;
 
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
         const chamados = JSON.parse(localStorage.getItem('chamados'));
         
+        const chamadosFiltrados = chamados.filter(chamado => {
+            const titulo = chamado.titulo.toLowerCase();
+            const id = chamado.id.toString();
+            return titulo.includes(searchTerm) || id.includes(searchTerm);
+        });
+
         const chamadosAbertos = chamados.filter(c => c.status === 'Aberto').length;
         if(summaryCount) {
              summaryCount.textContent = chamadosAbertos;
@@ -317,7 +343,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         userTicketList.innerHTML = '<h3>Chamados em Andamento</h3>'; 
 
-        chamados.forEach(chamado => {
+        if (chamadosFiltrados.length === 0) {
+            userTicketList.innerHTML += '<p>Nenhum chamado encontrado.</p>';
+        }
+
+        chamadosFiltrados.forEach(chamado => {
             const ticketCard = document.createElement('div');
             ticketCard.className = 'ticket-card card';
             ticketCard.innerHTML = `
@@ -593,6 +623,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     target.closest('.ticket-card').remove();
                     
+                    // Atualiza a contagem no resumo
                     const summaryCount = document.querySelector('.summary-details span');
                     if (summaryCount) {
                         const chamadosAbertos = chamadosAtualizados.filter(c => c.status === 'Aberto').length;
@@ -632,8 +663,16 @@ document.addEventListener('DOMContentLoaded', function() {
         initRegistrarPage();
     } else if (path.endsWith('dashboard-admin.html')) {
         initAdminDashboard();
+        const searchInputAdmin = document.getElementById('campo-busca-admin');
+        if (searchInputAdmin) {
+            searchInputAdmin.addEventListener('keyup', initAdminDashboard);
+        }
     } else if (path.endsWith('dashboard.html')) {
         initUserDashboard();
+        const searchInputUser = document.getElementById('campo-busca-user');
+        if (searchInputUser) {
+            searchInputUser.addEventListener('keyup', initUserDashboard);
+        }
     } else if (path.endsWith('abrir-chamado.html')) {
         initAbrirChamadoForm();
     } else if (path.endsWith('editar-chamado.html')) { 
