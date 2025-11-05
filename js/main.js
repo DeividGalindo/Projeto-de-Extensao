@@ -265,6 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="ticket-actions">
                     <button class="btn btn-primary btn-ver-detalhes" data-id="${chamado.id}">Detalhes</button>
                     <button class="btn btn-accent btn-editar-chamado" data-id="${chamado.id}">Editar</button>
+                    <button class="btn btn-danger btn-excluir-chamado" data-id="${chamado.id}">Excluir</button>
                 </div>
             `;
             userTicketList.appendChild(ticketCard);
