@@ -367,8 +367,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (target.classList.contains('btn-editar-chamado')) {
-                alert("Funcionalidade 'Editar' ainda não implementada.");
-            }
+                const ticketId = target.dataset.id;
+                window.location.href = `editar-chamado.html?id=${ticketId}`;
+            }
 
             if (target.matches('#form-abrir-chamado .btn-secondary')) {
                  alert("Funcionalidade 'Adicionar Anexos' ainda não implementada.");
