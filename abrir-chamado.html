@@ -35,7 +35,10 @@
                 </div>
                 
                 <div class="input-group">
-                    <button type="button" class="btn btn-secondary">Adicionar Anexos</button>
+                    <label for="anexo">Anexo (Imagem, máx 2MB):</label>
+                    <input type="file" id="anexo" name="anexo" class="input-file" accept="image/*">
+                    <label for="anexo" class="btn btn-secondary">Escolher arquivo</label>
+                    <span id="file-name-display" class="file-name">Nenhum arquivo selecionado</span>
                 </div>
 
                 <button type="submit" class="btn btn-accent">Enviar Chamado</button>
