@@ -794,3 +794,43 @@ a:hover {
     color: var(--text-color);
     opacity: 1;
 }
+
+.admin-actions-container {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--input-color);
+}
+
+.user-management-card {
+    background-color: var(--card-color);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-management-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 1.1em;
+}
+
+.user-management-info p {
+    margin: 0;
+    font-size: 0.9em;
+    opacity: 0.7;
+}
+
+.user-role-select {
+    width: 150px;
+    padding: 10px;
+    border: none;
+    background-color: var(--input-color);
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    font-size: 0.9em;
+    font-family: 'Poppins', sans-serif;
+    box-sizing: border-box;
+}

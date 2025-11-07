@@ -127,6 +127,15 @@ document.addEventListener('DOMContentLoaded', function() {
         header.insertAdjacentHTML('beforeend', navbarHTML);
     }
 
+    function injetaControlesAdmin(user) {
+        if (user && user.email === 'adm@admin.com') {
+            const container = document.getElementById('admin-actions-placeholder');
+            if (container) {
+                container.innerHTML = `<a href="gerenciar-usuarios.html" class="btn btn-primary">Gerenciar Usuários</a>`;
+            }
+        }
+    }
+
     document.addEventListener('click', function(event) {
         const dropdownMenu = document.querySelector('.dropdown-menu');
         if (!dropdownMenu || !dropdownMenu.classList.contains('active')) {
@@ -824,6 +833,74 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+    
+    function initGerenciarUsuarios() {
+        const userListContainer = document.getElementById('user-list-container');
+        if (!userListContainer) return;
+
+        db.collection("users").get()
+            .then((querySnapshot) => {
+                userListContainer.innerHTML = '';
+                if (querySnapshot.empty) {
+                    userListContainer.innerHTML = '<p>Nenhum usuário encontrado (exceto você).</p>';
+                    return;
+                }
+
+                const currentUser = auth.currentUser;
+
+                querySnapshot.forEach(doc => {
+                    const user = doc.data();
+                    const userId = doc.id;
+                    
+                    if (userId === currentUser.uid) return;
+
+                    const userCard = document.createElement('div');
+                    userCard.className = 'user-management-card';
+                    userCard.dataset.id = userId;
+
+                    const userInfo = document.createElement('div');
+                    userInfo.className = 'user-management-info';
+                    userInfo.innerHTML = `
+                        <h4>${user.nomeCompleto}</h4>
+                        <p>${user.email}</p>
+                    `;
+
+                    const roleSelector = document.createElement('select');
+                    roleSelector.className = 'user-role-select';
+                    roleSelector.dataset.id = userId;
+
+                    const roles = ["user", "admin", "admin_hardware", "admin_software", "admin_rede", "admin_outro"];
+                    roles.forEach(role => {
+                        const isSelected = user.role === role ? 'selected' : '';
+                        roleSelector.innerHTML += `<option value="${role}" ${isSelected}>${role}</option>`;
+                    });
+                    
+                    roleSelector.addEventListener('change', function(event) {
+                        const newRole = event.target.value;
+                        const targetUserId = event.target.dataset.id;
+                        
+                        db.collection("users").doc(targetUserId).update({
+                            role: newRole
+                        })
+                        .then(() => {
+                            showToast(`Função de ${user.nomeCompleto} atualizada para ${newRole}.`, "success");
+                        })
+                        .catch(err => {
+                            console.error("Erro ao atualizar função: ", err);
+                            showToast("Erro ao atualizar função.", "error");
+                        });
+                    });
+
+                    userCard.appendChild(userInfo);
+                    userCard.appendChild(roleSelector);
+                    userListContainer.appendChild(userCard);
+                });
+            })
+            .catch(err => {
+                console.error("Erro ao buscar usuários: ", err);
+                showToast("Erro ao carregar lista de usuários.", "error");
+            });
+    }
 
 
     function bindGlobalNavigators() {
@@ -843,6 +920,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 auth.signOut().then(() => {
                     localStorage.removeItem('usuarioLogado'); 
+                    localStorage.removeItem('usuarioRole');
+                    localStorage.removeItem('usuarioUid');
                     showToast("Você foi desconectado.", "info");
                     
                     setTimeout(() => {
@@ -913,6 +992,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!user) {
             localStorage.removeItem('usuarioLogado');
+            localStorage.removeItem('usuarioRole');
             localStorage.removeItem('usuarioUid');
             
             if (!path.endsWith('index.html') && !path.endsWith('registrar.html') && !path.endsWith('esqueci-senha.html')) {
@@ -929,6 +1009,8 @@ document.addEventListener('DOMContentLoaded', function() {
         else {
             localStorage.setItem('usuarioLogado', user.displayName || user.email);
             localStorage.setItem('usuarioUid', user.uid);
+            
+            injetaControlesAdmin(user);
             
             if (path.endsWith('index.html') || path.endsWith('registrar.html') || path.endsWith('esqueci-senha.html') || path === '/') {
                 console.log("Usuário já logado, redirecionando para o dashboard.");
@@ -950,6 +1032,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 initEditarChamadoPage();
             } else if (path.endsWith('detalhes-chamado.html')) {
                 initDetalhesPage();
+            } else if (path.endsWith('gerenciar-usuarios.html')) {
+                initGerenciarUsuarios();
             }
             
             const searchInputAdmin = document.getElementById('campo-busca-admin');
