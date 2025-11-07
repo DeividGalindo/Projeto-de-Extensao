@@ -705,3 +705,16 @@ a:hover {
     -webkit-appearance: none;
     appearance: none;
 }
+
+.ticket-actions-admin {
+    display: flex;
+    gap: 10px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--input-color);
+}
+
+.ticket-actions-admin .btn {
+    flex-grow: 1; 
+    width: auto; 
+}

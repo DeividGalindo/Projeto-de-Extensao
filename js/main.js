@@ -1,14 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // --- NOVA FUNÇÃO HELPER ---
-    // Retorna a data e hora atual formatada
+    // --- FUNÇÃO HELPER DE TIMESTAMP ---
     function getTimestampAtual() {
         const data = new Date();
-        // Formato: 06/11/2025 14:30:02
         return data.toLocaleString('pt-BR'); 
     }
-    // --- FIM DA NOVA FUNÇÃO ---
 
+    // --- FUNÇÕES DE UI (TOAST E MODAL) ---
     function injectNotificationContainers() {
         const toastContainer = document.createElement('div');
         toastContainer.id = 'toast-container';
@@ -79,6 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- FUNÇÃO DE UI (NAVBAR) ---
     function injetaNavbar() {
         const header = document.querySelector('.page-header');
         if (!header) {
@@ -99,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
         header.insertAdjacentHTML('beforeend', navbarHTML);
     }
 
+    // Listener global para fechar o menu dropdown
     document.addEventListener('click', function(event) {
         const dropdownMenu = document.querySelector('.dropdown-menu');
         if (!dropdownMenu || !dropdownMenu.classList.contains('active')) {
@@ -111,6 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // --- 1. SETUP DO BANCO DE DADOS (localStorage) ---
     function setupDatabase() {
         if (!localStorage.getItem('chamados')) {
             const chamadosIniciais = [
@@ -170,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
+    // --- 2. LÓGICA DA PÁGINA DE LOGIN (index.html) ---
     function initLoginPage() {
         const loginForm = document.querySelector('.login-box form');
         if (loginForm) {
@@ -198,6 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- 3. LÓGICA DO PAINEL DO ADMIN (dashboard-admin.html) ---
     function initAdminDashboard() {
         const adminTicketList = document.getElementById('admin-ticket-list');
         const searchInput = document.getElementById('campo-busca-admin');
@@ -252,6 +255,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     <h4>Chamado #${chamado.id} - ${chamado.titulo}</h4>
                     <p>Status: <span class="status ${chamado.status.toLowerCase().replace(' ', '-')}">${chamado.status}</span></p>
                 </div>
+
+                <div class="ticket-actions ticket-actions-admin">
+                    <button class="btn btn-primary btn-ver-detalhes" data-id="${chamado.id}">Detalhes</button>
+                    <button class="btn btn-accent btn-editar-chamado" data-id="${chamado.id}">Editar</button>
+                    <button class="btn btn-danger btn-excluir-chamado" data-id="${chamado.id}">Excluir</button>
+                </div>
+
                 <div class="assignment-controls">
                     <div>
                         <label for="depto-${chamado.id}">Designar para:</label>
@@ -283,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const chamadosAtualizados = chamadosAtuais.map(chamado => {
                 if (chamado.id == ticketId) {
                     const novoItemHistorico = {
-                        data: getTimestampAtual(), // <-- MUDANÇA APLICADA
+                        data: getTimestampAtual(),
                         autor: adminUser,
                         acao: `${nomeCampo} alterado para "${valor || 'Nenhum'}".`
                     };
@@ -328,10 +338,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- 4. LÓGICA DO PAINEL DO USUÁRIO (dashboard.html) ---
     function initUserDashboard() {
         const userTicketList = document.getElementById('user-ticket-list');
         const summaryCount = document.querySelector('.summary-details span');
-        const summaryDate = document.getElementById('summary-date'); // <-- SELETOR ADICIONADO
+        const summaryDate = document.getElementById('summary-date');
         const searchInput = document.getElementById('campo-busca-user');
         
         if (!userTicketList) return;
@@ -350,13 +361,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if(summaryCount) {
              summaryCount.textContent = chamadosAbertos;
         }
-
-        // --- MUDANÇA APLICADA ---
+        
         if(summaryDate) {
-            // Mostra a data atual no formato DD/MM/AAAA
             summaryDate.textContent = new Date().toLocaleDateString('pt-BR');
         }
-        // --- FIM DA MUDANÇA ---
 
         userTicketList.innerHTML = '<h3>Chamados em Andamento</h3>'; 
 
@@ -382,6 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- 5. LÓGICA DO FORMULÁRIO (abrir-chamado.html) ---
     function initAbrirChamadoForm() {
         const formAbrirChamado = document.querySelector('#form-abrir-chamado');
         if (formAbrirChamado) {
@@ -405,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     departamento: null,
                     prioridade: "Não definida", 
                     historico: [
-                        { data: getTimestampAtual(), autor: "Sistema", acao: "Chamado aberto." } // <-- MUDANÇA APLICADA
+                        { data: getTimestampAtual(), autor: "Sistema", acao: "Chamado aberto." }
                     ]
                 };
                 
@@ -418,6 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- 6. LÓGICA DA PÁGINA DE EDIÇÃO (editar-chamado.html) ---
     function initEditarChamadoPage() {
         const params = new URLSearchParams(window.location.search);
         const ticketId = params.get('id');
@@ -451,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const chamadosAtualizados = chamados.map(chamado => {
                 if (chamado.id == ticketId) {
                     const novoItemHistorico = {
-                        data: getTimestampAtual(), // <-- MUDANÇA APLICADA
+                        data: getTimestampAtual(),
                         autor: localStorage.getItem('usuarioLogado') || "Usuário",
                         acao: "Dados do chamado foram editados."
                     };
@@ -473,6 +483,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- 7. LÓGICA DA PÁGINA DE DETALHES (detalhes-chamado.html) ---
     function initDetalhesPage() {
         const params = new URLSearchParams(window.location.search);
         const ticketId = params.get('id');
@@ -521,7 +532,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const acao = commentTextarea.value;
                 
                 if (acao && acao.trim() !== "") {
-                    const dataFormatada = getTimestampAtual(); // <-- MUDANÇA APLICADA
+                    const dataFormatada = getTimestampAtual();
                     
                     const novoItemHistorico = {
                         data: dataFormatada,
@@ -550,6 +561,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- 8. LÓGICA DA PÁGINA DE REGISTRO (registrar.html) ---
     function initRegistrarPage() {
         const registrarForm = document.querySelector('#form-registrar');
         if (registrarForm) {
@@ -592,6 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+    // --- 9. LÓGICA DE NAVEGAÇÃO GLOBAL (Para todos os botões) ---
     function bindGlobalNavigators() {
         document.body.addEventListener('click', function(event) {
             const target = event.target; 
@@ -640,7 +653,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     target.closest('.ticket-card').remove();
                     
-                    const summaryCount = document.querySelector('.summary-details span');
+                    // Atualiza a contagem no resumo (verifica se está na página do usuário)
+                    const summaryCount = document.querySelector('#user-ticket-list .summary-details span');
                     if (summaryCount) {
                         const chamadosAbertos = chamadosAtualizados.filter(c => c.status === 'Aberto').length;
                         summaryCount.textContent = chamadosAbertos;
@@ -663,6 +677,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    
+    // --- ROTEADOR PRINCIPAL ---
     
     setupDatabase();
     
