@@ -755,3 +755,14 @@ a:hover {
     border-radius: var(--border-radius);
     margin-top: 10px;
 }
+
+.content-wrapper-centralizado {
+
+    flex-grow: 1; 
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+}
