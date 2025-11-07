@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - ServiceDesk App</title>
+    <title>Recuperar Senha - ServiceDesk App</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,29 +12,28 @@
 <body>
     <div class="login-container">
         <div class="login-box">
-            <h1>Bem-vindo ao ServiceDeskApp</h1>
-            <form>
+            <h1>Recuperar Senha</h1>
+            <p style="opacity: 0.8; font-size: 0.9em; margin-top: -15px; margin-bottom: 25px;">
+                Digite seu email e enviaremos um link para redefinir sua senha.
+            </p>
+            
+            <form id="form-esqueci-senha">
                 <div class="input-group">
                     <label for="email">Email</label>
-                        <input type="email" id="email" name="email"> </div>
-                <div class="input-group">
-                    <label for="password">Senha</label>
-                    <input type="password" id="password" name="password">
+                    <input type="email" id="email" name="email" required>
                 </div>
-               <button type="submit" class="btn btn-primary">Entrar</button>
-        </form>
-        <a href="esqueci-senha.html" class="forgot-password">Recuperar senha</a>
-        <a href="registrar.html" class="forgot-password">Não tem uma conta? Registre-se</a>
+                
+                <button type="submit" class="btn btn-primary">Enviar Email</button>
+            </form>
+            <a href="index.html" class="forgot-password">Voltar para o Login</a>
+        </div>
     </div>
-</div>
-    </div>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-
     <script>
-
       const firebaseConfig = {
         apiKey: "AIzaSyDSyhME4d7gPzbkAOOZJo34vogcspOC6LQ",
         authDomain: "servicedesk-projeto-extensao.firebaseapp.com",
@@ -43,15 +42,8 @@
         messagingSenderId: "758697413283",
         appId: "1:758697413283:web:d709d07b27e293deee0d16"
       };
-
       firebase.initializeApp(firebaseConfig);
     </script>
-
-    <script src="js/main.js"></script>
-
-</body>
-</html>
-
     <script src="js/main.js"></script>
 
 </body>

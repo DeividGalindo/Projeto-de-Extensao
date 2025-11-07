@@ -141,7 +141,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initLoginPage() {
         const loginForm = document.querySelector('.login-box form');
-        const btnRecuperar = document.getElementById('btn-recuperar-senha');
         
         if (loginForm) {
             loginForm.addEventListener('submit', function(event) {
@@ -166,21 +165,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
             });
         }
-        
-        if (btnRecuperar) {
-            btnRecuperar.addEventListener('click', function(event) {
+    }
+
+    function initEsqueciSenhaPage() {
+        const formEsqueciSenha = document.getElementById('form-esqueci-senha');
+        if (formEsqueciSenha) {
+            formEsqueciSenha.addEventListener('submit', function(event) {
                 event.preventDefault();
-                const emailInput = document.getElementById('email');
-                const email = emailInput.value;
+                const email = document.getElementById('email').value;
 
                 if (email === "") {
-                    showToast("Por favor, digite seu email no campo 'Email'.", "error");
+                    showToast("Por favor, digite seu email.", "error");
                     return;
                 }
 
                 auth.sendPasswordResetEmail(email)
                     .then(() => {
                         showToast("Email de redefinição enviado! Verifique sua caixa de entrada.", "success");
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 3000);
                     })
                     .catch((error) => {
                         console.error("Erro ao enviar email de redefinição:", error.code);
@@ -620,7 +624,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (item.dataReal && item.dataReal.toDate) {
                         item.dataRealJS = item.dataReal.toDate();
                     } else if (item.dataReal instanceof Date) {
-                        item.dataRealJS = item.dataReal;
+                        item.dataRealJS = item.Data;
                     } else {
                         item.dataRealJS = new Date(0); 
                     }
@@ -855,17 +859,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const path = window.location.pathname; 
 
         if (!user) {
-            if (!path.endsWith('index.html') && !path.endsWith('registrar.html')) {
+            if (!path.endsWith('index.html') && !path.endsWith('registrar.html') && !path.endsWith('esqueci-senha.html')) {
                 console.log("Usuário não logado, redirecionando para o login.");
                 window.location.href = 'index.html';
             } else if (path.endsWith('index.html') || path === '/') {
                 initLoginPage();
             } else if (path.endsWith('registrar.html')) { 
                 initRegistrarPage();
+            } else if (path.endsWith('esqueci-senha.html')) {
+                initEsqueciSenhaPage();
             }
         } 
         else {
-            if (path.endsWith('index.html') || path.endsWith('registrar.html') || path === '/') {
+            if (path.endsWith('index.html') || path.endsWith('registrar.html') || path.endsWith('esqueci-senha.html') || path === '/') {
                 console.log("Usuário já logado, redirecionando para o dashboard.");
                 if (user.email === 'adm@admin.com') {
                     window.location.href = 'dashboard-admin.html';
