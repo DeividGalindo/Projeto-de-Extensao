@@ -2,6 +2,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const auth = firebase.auth();
     const db = firebase.firestore();
+    
+    // Váriavel global temporária para guardar o anexo
+    let anexoPendente = null;
 
     function getTimestampAtual() {
         return firebase.firestore.FieldValue.serverTimestamp();
@@ -403,13 +406,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initAbrirChamadoForm() {
         const formAbrirChamado = document.querySelector('#form-abrir-chamado');
+        const anexoInput = document.getElementById('anexo');
+        const fileNameDisplay = document.getElementById('file-name-display');
+        
         if (formAbrirChamado) {
             
+            anexoPendente = null;
+
             const user = auth.currentUser;
             if (!user) {
                 showToast("Você precisa estar logado para abrir um chamado.", "error");
                 window.location.href = 'index.html';
                 return;
+            }
+
+            if (anexoInput) {
+                anexoInput.addEventListener('change', function(event) {
+                    const file = event.target.files[0];
+                    if (!file) {
+                        anexoPendente = null;
+                        fileNameDisplay.textContent = "Nenhum arquivo selecionado";
+                        return;
+                    }
+
+                    if (file.size > 2 * 1024 * 1024) { // Limite de 2MB
+                        showToast("Arquivo muito grande. O limite é de 2MB.", "error");
+                        anexoInput.value = ""; // Limpa o input
+                        anexoPendente = null;
+                        fileNameDisplay.textContent = "Arquivo muito grande!";
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        anexoPendente = e.target.result; // Salva o Base64
+                        fileNameDisplay.textContent = file.name; // Mostra o nome do arquivo
+                        showToast("Anexo pronto para envio.", "success");
+                    };
+                    reader.onerror = function() {
+                        showToast("Erro ao ler o arquivo.", "error");
+                        anexoPendente = null;
+                        fileNameDisplay.textContent = "Erro ao ler arquivo.";
+                    };
+                    reader.readAsDataURL(file); // Converte para Base64
+                });
             }
             
             formAbrirChamado.addEventListener('submit', function(event) {
@@ -428,7 +468,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     status: "Aberto",
                     departamento: null,
                     prioridade: "Não definida",
-                    anexo: null,
                     dataAbertura: getTimestampAtual(),
                     numeroChamado: dataAtual.getTime().toString().slice(-6),
                     userId: user.uid,
@@ -446,6 +485,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 db.collection("chamados").add(novoChamado)
                     .then((docRef) => {
                         console.log("Novo chamado salvo com ID: ", docRef.id);
+                        
+                        if (anexoPendente) {
+                            try {
+                                localStorage.setItem('anexo_' + docRef.id, anexoPendente);
+                                console.log("Anexo salvo no localStorage com a chave: anexo_" + docRef.id);
+                            } catch (e) {
+                                console.error("Erro ao salvar anexo no localStorage: ", e);
+                                showToast("Chamado criado, mas o anexo era muito grande para salvar localmente.", "error");
+                            }
+                            anexoPendente = null;
+                        }
+                        
                         window.location.href = 'confirmacao.html'; 
                     })
                     .catch((error) => {
@@ -583,6 +634,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('detalhes-descricao').textContent = chamado.descricao;
                 
                 renderizarHistorico(chamado.historico);
+                
+                const anexoContainer = document.getElementById('detalhes-anexo-container');
+                const anexoData = localStorage.getItem('anexo_' + ticketId);
+                
+                if (anexoData && anexoContainer) {
+                    anexoContainer.classList.add('com-anexo');
+                    const img = document.createElement('img');
+                    img.src = anexoData;
+                    img.alt = "Anexo do chamado";
+                    anexoContainer.appendChild(img);
+                }
+
             })
             .catch((error) => {
                 console.error("Erro ao buscar detalhes: ", error);
@@ -723,6 +786,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     db.collection("chamados").doc(ticketId).delete()
                         .then(() => {
+                            localStorage.removeItem('anexo_' + ticketId);
+                            
                             showToast("Chamado excluído com sucesso.", "success");
                             target.closest('.ticket-card').remove();
                             
@@ -739,7 +804,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (target.matches('#form-abrir-chamado .btn-secondary')) {
-                 showToast("Funcionalidade 'Adicionar Anexos' será implementada na Fase 4.", "info");
+                // Esta lógica agora está no initAbrirChamadoForm, 
+                // o clique é tratado pelo <label for="anexo">
             }
 
             const id = target.id;
