@@ -43,9 +43,20 @@
             <section class="tickets-section">
                 <h3>Todos os Chamados</h3>
 
-                <div class="search-container">
-        <input type="search" id="campo-busca-admin" placeholder="Buscar por título ou ID...">
-    </div>
+    <main class="dashboard-content">
+
+        <div class="search-container">
+            <input type="search" id="campo-busca-admin" placeholder="Buscar por ID...">
+        </div>
+
+        <div class="filter-container" id="filter-container-admin">
+            <button class="btn btn-filter active" data-status="todos">Todos</button>
+            <button class="btn btn-filter" data-status="Aberto">Abertos</button>
+            <button class="btn btn-filter" data-status="Em Progresso">Em Andamento</button>
+            <button class="btn btn-filter" data-status="Fechado">Finalizados</button>
+        </div>
+
+        <section class="tickets-section" id="admin-ticket-list">
 
     <section class="tickets-section" id="admin-ticket-list">
         </section>

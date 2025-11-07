@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let chamadosDoUsuarioCache = [];
     let chamadosDoAdminCache = [];
+    
+    let filtroStatusUsuario = 'todos';
+    let filtroStatusAdmin = 'todos';
 
     function getTimestampAtual() {
         return firebase.firestore.FieldValue.serverTimestamp();
@@ -238,7 +241,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
 
-        const chamadosFiltrados = chamadosDoAdminCache.filter(chamado => {
+        const chamadosFiltradosPorStatus = chamadosDoAdminCache.filter(chamado => {
+            if (filtroStatusAdmin === 'todos') return true;
+            return chamado.status === filtroStatusAdmin;
+        });
+
+        const chamadosFiltrados = chamadosFiltradosPorStatus.filter(chamado => {
             const titulo = chamado.titulo.toLowerCase();
             const id = chamado.numeroChamado ? chamado.numeroChamado.toString() : '';
             return titulo.includes(searchTerm) || id.includes(searchTerm);
@@ -360,7 +368,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function initAdminDashboard() {
         const searchInput = document.getElementById('campo-busca-admin');
-        if (!searchInput) return;
+        const filterContainer = document.getElementById('filter-container-admin');
+        if (!searchInput || !filterContainer) return;
 
         db.collection("chamados")
           .orderBy("dataAbertura", "desc")
@@ -375,9 +384,16 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast("Erro ao carregar chamados.", "error");
           });
         
-        if (searchInput) {
-            searchInput.addEventListener('keyup', renderAdminList);
-        }
+        searchInput.addEventListener('keyup', renderAdminList);
+        
+        filterContainer.addEventListener('click', function(event) {
+            if (event.target.classList.contains('btn-filter')) {
+                filterContainer.querySelector('.active').classList.remove('active');
+                event.target.classList.add('active');
+                filtroStatusAdmin = event.target.dataset.status;
+                renderAdminList();
+            }
+        });
     }
 
     function renderUserList() {
@@ -390,7 +406,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
         
-        const chamadosFiltrados = chamadosDoUsuarioCache.filter(chamado => {
+        const chamadosFiltradosPorStatus = chamadosDoUsuarioCache.filter(chamado => {
+            if (filtroStatusUsuario === 'todos') return true;
+            return chamado.status === filtroStatusUsuario;
+        });
+
+        const chamadosFiltrados = chamadosFiltradosPorStatus.filter(chamado => {
             const titulo = chamado.titulo.toLowerCase();
             const id = chamado.numeroChamado ? chamado.numeroChamado.toString() : '';
             return titulo.includes(searchTerm) || id.includes(searchTerm);
@@ -431,7 +452,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initUserDashboard() {
         const searchInput = document.getElementById('campo-busca-user');
-        if (!searchInput) return;
+        const filterContainer = document.getElementById('filter-container-user');
+        if (!searchInput || !filterContainer) return;
         
         const user = auth.currentUser;
         if (!user) return;
@@ -450,9 +472,16 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast("Erro ao carregar seus chamados.", "error");
           });
         
-        if (searchInput) {
-            searchInput.addEventListener('keyup', renderUserList);
-        }
+        searchInput.addEventListener('keyup', renderUserList);
+        
+        filterContainer.addEventListener('click', function(event) {
+            if (event.target.classList.contains('btn-filter')) {
+                filterContainer.querySelector('.active').classList.remove('active');
+                event.target.classList.add('active');
+                filtroStatusUsuario = event.target.dataset.status;
+                renderUserList();
+            }
+        });
     }
 
     function initAbrirChamadoForm() {
@@ -884,7 +913,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!user) {
             localStorage.removeItem('usuarioLogado');
-            localStorage.removeItem('usuarioRole');
             localStorage.removeItem('usuarioUid');
             
             if (!path.endsWith('index.html') && !path.endsWith('registrar.html') && !path.endsWith('esqueci-senha.html')) {
