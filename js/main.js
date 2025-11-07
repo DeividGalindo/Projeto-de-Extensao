@@ -766,9 +766,21 @@ document.addEventListener('DOMContentLoaded', function() {
                             displayName: nomeCompleto
                         });
                     })
-                    .then(() => {
-                        alert("Conta criada com sucesso! Você será redirecionado para a página de login.");
-                        window.location.href = 'index.html';
+                    .then((userCredential) => {
+                        const user = auth.currentUser;
+                        db.collection("users").doc(user.uid).set({
+                            nomeCompleto: nomeCompleto,
+                            email: email,
+                            role: "user" 
+                        })
+                        .then(() => {
+                            alert("Conta criada com sucesso! Você será redirecionado para a página de login.");
+                            window.location.href = 'index.html';
+                        })
+                        .catch((error) => {
+                             console.error("Erro ao salvar usuário no Firestore: ", error);
+                             showToast("Erro ao criar conta (db).", "error");
+                        });
                     })
                     .catch((error) => {
                         console.error("Erro de registro:", error.code);
@@ -845,7 +857,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (target.matches('#form-abrir-chamado .btn-secondary')) {
-                 showToast("Funcionalidade 'Adicionar Anexos' ainda não implementada.", "info");
             }
 
             const id = target.id;
@@ -872,6 +883,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const path = window.location.pathname; 
 
         if (!user) {
+            localStorage.removeItem('usuarioLogado');
+            localStorage.removeItem('usuarioRole');
+            localStorage.removeItem('usuarioUid');
+            
             if (!path.endsWith('index.html') && !path.endsWith('registrar.html') && !path.endsWith('esqueci-senha.html')) {
                 console.log("Usuário não logado, redirecionando para o login.");
                 window.location.href = 'index.html';
@@ -884,6 +899,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } 
         else {
+            localStorage.setItem('usuarioLogado', user.displayName || user.email);
+            localStorage.setItem('usuarioUid', user.uid);
+            
             if (path.endsWith('index.html') || path.endsWith('registrar.html') || path.endsWith('esqueci-senha.html') || path === '/') {
                 console.log("Usuário já logado, redirecionando para o dashboard.");
                 if (user.email === 'adm@admin.com') {
