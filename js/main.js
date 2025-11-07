@@ -1,5 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
 
+    // --- NOVA FUNÇÃO HELPER ---
+    // Retorna a data e hora atual formatada
+    function getTimestampAtual() {
+        const data = new Date();
+        // Formato: 06/11/2025 14:30:02
+        return data.toLocaleString('pt-BR'); 
+    }
+    // --- FIM DA NOVA FUNÇÃO ---
+
     function injectNotificationContainers() {
         const toastContainer = document.createElement('div');
         toastContainer.id = 'toast-container';
@@ -114,8 +123,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     departamento: "Hardware - Pedro Afonso",
                     prioridade: "Alta",
                     historico: [
-                        { data: "10/10/2025", autor: "Maria", acao: "Verificação inicial concluída." },
-                        { data: "11/10/2025", autor: "João (TI)", acao: "Em andamento." }
+                        { data: "01/11/2025 10:30:15", autor: "Maria", acao: "Verificação inicial concluída." },
+                        { data: "02/11/2025 14:02:00", autor: "João (TI)", acao: "Em andamento." }
                     ]
                 },
                 { 
@@ -127,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     departamento: null,
                     prioridade: "Média",
                     historico: [
-                        { data: "12/10/2025", autor: "Sistema", acao: "Chamado aberto." }
+                        { data: "03/11/2025 09:15:45", autor: "Sistema", acao: "Chamado aberto." }
                     ]
                 }, 
                 { 
@@ -139,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     departamento: null,
                     prioridade: "Baixa",
                     historico: [
-                         { data: "13/10/2025", autor: "Sistema", acao: "Chamado aberto." }
+                         { data: "04/11/2025 16:00:10", autor: "Sistema", acao: "Chamado aberto." }
                     ]
                 }
             ];
@@ -274,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const chamadosAtualizados = chamadosAtuais.map(chamado => {
                 if (chamado.id == ticketId) {
                     const novoItemHistorico = {
-                        data: new Date().toLocaleDateString('pt-BR'),
+                        data: getTimestampAtual(), // <-- MUDANÇA APLICADA
                         autor: adminUser,
                         acao: `${nomeCampo} alterado para "${valor || 'Nenhum'}".`
                     };
@@ -322,6 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function initUserDashboard() {
         const userTicketList = document.getElementById('user-ticket-list');
         const summaryCount = document.querySelector('.summary-details span');
+        const summaryDate = document.getElementById('summary-date'); // <-- SELETOR ADICIONADO
         const searchInput = document.getElementById('campo-busca-user');
         
         if (!userTicketList) return;
@@ -340,6 +350,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if(summaryCount) {
              summaryCount.textContent = chamadosAbertos;
         }
+
+        // --- MUDANÇA APLICADA ---
+        if(summaryDate) {
+            // Mostra a data atual no formato DD/MM/AAAA
+            summaryDate.textContent = new Date().toLocaleDateString('pt-BR');
+        }
+        // --- FIM DA MUDANÇA ---
 
         userTicketList.innerHTML = '<h3>Chamados em Andamento</h3>'; 
 
@@ -388,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     departamento: null,
                     prioridade: "Não definida", 
                     historico: [
-                        { data: new Date().toLocaleDateString('pt-BR'), autor: "Sistema", acao: "Chamado aberto." }
+                        { data: getTimestampAtual(), autor: "Sistema", acao: "Chamado aberto." } // <-- MUDANÇA APLICADA
                     ]
                 };
                 
@@ -434,7 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const chamadosAtualizados = chamados.map(chamado => {
                 if (chamado.id == ticketId) {
                     const novoItemHistorico = {
-                        data: new Date().toLocaleDateString('pt-BR'),
+                        data: getTimestampAtual(), // <-- MUDANÇA APLICADA
                         autor: localStorage.getItem('usuarioLogado') || "Usuário",
                         acao: "Dados do chamado foram editados."
                     };
@@ -504,7 +521,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const acao = commentTextarea.value;
                 
                 if (acao && acao.trim() !== "") {
-                    const dataFormatada = new Date().toLocaleDateString('pt-BR');
+                    const dataFormatada = getTimestampAtual(); // <-- MUDANÇA APLICADA
                     
                     const novoItemHistorico = {
                         data: dataFormatada,
@@ -623,7 +640,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     target.closest('.ticket-card').remove();
                     
-                    // Atualiza a contagem no resumo
                     const summaryCount = document.querySelector('.summary-details span');
                     if (summaryCount) {
                         const chamadosAbertos = chamadosAtualizados.filter(c => c.status === 'Aberto').length;
