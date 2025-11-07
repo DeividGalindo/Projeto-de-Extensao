@@ -4,8 +4,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const db = firebase.firestore();
 
     function getTimestampAtual() {
-        const data = new Date();
-        return data.toLocaleString('pt-BR'); 
+        return firebase.firestore.FieldValue.serverTimestamp();
+    }
+    
+    function formatarTimestamp(timestamp) {
+        let data;
+        if (!timestamp) {
+            return "Data pendente";
+        }
+        if (timestamp.toDate) {
+            data = timestamp.toDate();
+        } else if (timestamp instanceof Date) {
+            data = timestamp;
+        } else {
+            return "Data inválida";
+        }
+        return data.toLocaleString('pt-BR');
     }
 
     function injectNotificationContainers() {
@@ -83,7 +97,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!header) {
             return;
         }
-        const nomeUsuario = localStorage.getItem('usuarioLogado') || 'Visitante';
+        
+        const user = auth.currentUser;
+        const nomeUsuario = user ? (user.displayName || user.email) : 'Visitante';
+        
+        if (user) {
+            localStorage.setItem('usuarioLogado', nomeUsuario);
+        }
+        
         const navbarHTML = `
             <div class="navbar-container">
                 <div class="user-menu">
@@ -111,53 +132,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function setupDatabase() {
-        
-        if (!localStorage.getItem('chamados')) {
-            const chamadosIniciais = [
-                { 
-                    id: 1234, 
-                    titulo: "Computador não liga", 
-                    descricao: "Meu computador da mesa 5 não está ligando, a tela fica preta.", 
-                    categoria: "hardware", 
-                    status: "Em Progresso", 
-                    departamento: "Hardware - Pedro Afonso",
-                    prioridade: "Alta",
-                    anexo: null,
-                    historico: [
-                        { data: "01/11/2025 10:30:15", autor: "Maria", acao: "Verificação inicial concluída." },
-                        { data: "02/11/2025 14:02:00", autor: "João (TI)", acao: "Em andamento." }
-                    ]
-                },
-                { 
-                    id: 1235, 
-                    titulo: "Erro ao acessar sistema de Vendas", 
-                    descricao: "O sistema de vendas XYZ está mostrando um erro '503' ao tentar logar.", 
-                    categoria: "software", 
-                    status: "Aberto", 
-                    departamento: null,
-                    prioridade: "Média",
-                    anexo: null,
-                    historico: [
-                        { data: "03/11/2025 09:15:45", autor: "Sistema", acao: "Chamado aberto." }
-                    ]
-                }, 
-                { 
-                    id: 1236, 
-                    titulo: "Impressora não funciona", 
-                    descricao: "A impressora do segundo andar não está imprimindo os relatórios.", 
-                    categoria: "hardware", 
-                    status: "Aberto", 
-                    departamento: null,
-                    prioridade: "Baixa",
-                    anexo: null,
-                    historico: [
-                         { data: "04/11/2025 16:00:10", autor: "Sistema", acao: "Chamado aberto." }
-                    ]
-                }
-            ];
-            localStorage.setItem('chamados', JSON.stringify(chamadosIniciais));
-        }
-
         window.appData = {
             departamentos: ["Hardware - Pedro Afonso", "Software - Carlos Eduardo Marinho", "Rede - Sandro Pinto", "Outros - Atendente Geral"]
         };
@@ -174,14 +148,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 auth.signInWithEmailAndPassword(email, password)
                     .then((userCredential) => {
                         const user = userCredential.user;
-                        
                         localStorage.setItem('usuarioLogado', user.displayName || user.email); 
                         
                         if (user.email === 'adm@admin.com') {
-                            console.log('Login de Administrador bem-sucedido!');
                             window.location.href = 'dashboard-admin.html';
                         } else {
-                            console.log('Login de Usuário Comum bem-sucedido!');
                             window.location.href = 'dashboard.html';
                         }
                     })
@@ -200,138 +171,157 @@ document.addEventListener('DOMContentLoaded', function() {
     function initAdminDashboard() {
         const adminTicketList = document.getElementById('admin-ticket-list');
         const searchInput = document.getElementById('campo-busca-admin');
-        
         if (!adminTicketList) return;
 
-        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-
-        const chamados = JSON.parse(localStorage.getItem('chamados'));
         const departamentos = window.appData.departamentos;
-        
         const statusList = ["Aberto", "Em Progresso", "Fechado"];
         const prioridadeList = ["Baixa", "Média", "Alta", "Não definida"];
 
-        const chamadosFiltrados = chamados.filter(chamado => {
-            const titulo = chamado.titulo.toLowerCase();
-            const id = chamado.id.toString();
-            return titulo.includes(searchTerm) || id.includes(searchTerm);
-        });
+        function renderAdminList() {
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
 
-        adminTicketList.innerHTML = ''; 
+            db.collection("chamados")
+              .orderBy("dataAbertura", "desc")
+              .get()
+              .then((querySnapshot) => {
+                
+                adminTicketList.innerHTML = '';
+                let chamadosFiltrados = [];
+                
+                querySnapshot.forEach((doc) => {
+                    chamadosFiltrados.push({ id: doc.id, ...doc.data() });
+                });
 
-        if (chamadosFiltrados.length === 0) {
-            adminTicketList.innerHTML = '<p>Nenhum chamado encontrado.</p>';
+                chamadosFiltrados = chamadosFiltrados.filter(chamado => {
+                    const titulo = chamado.titulo.toLowerCase();
+                    const id = chamado.id.toString().toLowerCase();
+                    return titulo.includes(searchTerm) || id.includes(searchTerm);
+                });
+
+                if (chamadosFiltrados.length === 0) {
+                    adminTicketList.innerHTML = '<p>Nenhum chamado encontrado.</p>';
+                }
+
+                chamadosFiltrados.forEach(chamado => {
+                    const ticketCard = document.createElement('div');
+                    ticketCard.className = 'ticket-card card';
+                    ticketCard.dataset.id = chamado.id;
+
+                    let deptoOptionsHTML = '<option value="null">Nenhum</option>';
+                    departamentos.forEach(depto => {
+                        const isSelected = chamado.departamento === depto ? 'selected' : '';
+                        deptoOptionsHTML += `<option value="${depto}" ${isSelected}>${depto}</option>`;
+                    });
+
+                    let statusOptionsHTML = '';
+                    statusList.forEach(status => {
+                        const isSelected = chamado.status === status ? 'selected' : '';
+                        statusOptionsHTML += `<option value="${status}" ${isSelected}>${status}</option>`;
+                    });
+
+                    let prioridadeOptionsHTML = '';
+                    prioridadeList.forEach(prioridade => {
+                        const isSelected = chamado.prioridade === prioridade ? 'selected' : '';
+                        prioridadeOptionsHTML += `<option value="${prioridade}" ${isSelected}>${prioridade}</option>`;
+                    });
+
+                    ticketCard.innerHTML = `
+                        <div class="ticket-info">
+                            <h4>Chamado #${chamado.id.substring(0, 6)}... - ${chamado.titulo}</h4>
+                            <p>Status: <span class="status ${chamado.status.toLowerCase().replace(' ', '-')}">${chamado.status}</span></p>
+                        </div>
+
+                        <div class="ticket-actions ticket-actions-admin">
+                            <button class="btn btn-primary btn-ver-detalhes" data-id="${chamado.id}">Detalhes</button>
+                            <button class="btn btn-accent btn-editar-chamado" data-id="${chamado.id}">Editar</button>
+                            <button class="btn btn-danger btn-excluir-chamado" data-id="${chamado.id}">Excluir</button>
+                        </div>
+
+                        <div class="assignment-controls">
+                            <div>
+                                <label for="depto-${chamado.id}">Designar para:</label>
+                                <select id="depto-${chamado.id}" class="departamento-select admin-select" data-id="${chamado.id}">
+                                    ${deptoOptionsHTML}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="status-${chamado.id}">Mudar Status:</label>
+                                <select id="status-${chamado.id}" class="status-select admin-select" data-id="${chamado.id}">
+                                    ${statusOptionsHTML}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="prioridade-${chamado.id}">Mudar Prioridade:</label>
+                                <select id="prioridade-${chamado.id}" class="prioridade-select admin-select" data-id="${chamado.id}">
+                                    ${prioridadeOptionsHTML}
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                    adminTicketList.appendChild(ticketCard);
+                });
+
+                attachAdminListeners();
+            })
+            .catch((error) => {
+                console.error("Erro ao buscar chamados: ", error);
+                showToast("Erro ao carregar chamados.", "error");
+            });
         }
-
-        chamadosFiltrados.forEach(chamado => {
-            const ticketCard = document.createElement('div');
-            ticketCard.className = 'ticket-card card';
-            ticketCard.dataset.id = chamado.id;
-
-            let deptoOptionsHTML = '<option value="null">Nenhum</option>';
-            departamentos.forEach(depto => {
-                const isSelected = chamado.departamento === depto ? 'selected' : '';
-                deptoOptionsHTML += `<option value="${depto}" ${isSelected}>${depto}</option>`;
-            });
-
-            let statusOptionsHTML = '';
-            statusList.forEach(status => {
-                const isSelected = chamado.status === status ? 'selected' : '';
-                statusOptionsHTML += `<option value="${status}" ${isSelected}>${status}</option>`;
-            });
-
-            let prioridadeOptionsHTML = '';
-            prioridadeList.forEach(prioridade => {
-                const isSelected = chamado.prioridade === prioridade ? 'selected' : '';
-                prioridadeOptionsHTML += `<option value="${prioridade}" ${isSelected}>${prioridade}</option>`;
-            });
-
-            ticketCard.innerHTML = `
-                <div class="ticket-info">
-                    <h4>Chamado #${chamado.id} - ${chamado.titulo}</h4>
-                    <p>Status: <span class="status ${chamado.status.toLowerCase().replace(' ', '-')}">${chamado.status}</span></p>
-                </div>
-
-                <div class="ticket-actions ticket-actions-admin">
-                    <button class="btn btn-primary btn-ver-detalhes" data-id="${chamado.id}">Detalhes</button>
-                    <button class="btn btn-accent btn-editar-chamado" data-id="${chamado.id}">Editar</button>
-                    <button class="btn btn-danger btn-excluir-chamado" data-id="${chamado.id}">Excluir</button>
-                </div>
-
-                <div class="assignment-controls">
-                    <div>
-                        <label for="depto-${chamado.id}">Designar para:</label>
-                        <select id="depto-${chamado.id}" class="departamento-select admin-select" data-id="${chamado.id}">
-                            ${deptoOptionsHTML}
-                        </select>
-                    </div>
-                    <div>
-                        <label for="status-${chamado.id}">Mudar Status:</label>
-                        <select id="status-${chamado.id}" class="status-select admin-select" data-id="${chamado.id}">
-                            ${statusOptionsHTML}
-                        </select>
-                    </div>
-                    <div>
-                        <label for="prioridade-${chamado.id}">Mudar Prioridade:</label>
-                        <select id="prioridade-${chamado.id}" class="prioridade-select admin-select" data-id="${chamado.id}">
-                            ${prioridadeOptionsHTML}
-                        </select>
-                    </div>
-                </div>
-            `;
-            adminTicketList.appendChild(ticketCard);
-        });
         
         function salvarAlteracao(ticketId, campo, valor, nomeCampo) {
-            const chamadosAtuais = JSON.parse(localStorage.getItem('chamados'));
             const adminUser = localStorage.getItem('usuarioLogado') || "Admin"; 
             
-            const chamadosAtualizados = chamadosAtuais.map(chamado => {
-                if (chamado.id == ticketId) {
-                    const novoItemHistorico = {
-                        data: getTimestampAtual(),
-                        autor: adminUser,
-                        acao: `${nomeCampo} alterado para "${valor || 'Nenhum'}".`
-                    };
-                    return {
-                        ...chamado,
-                        [campo]: valor === 'null' ? null : valor, 
-                        historico: [...chamado.historico, novoItemHistorico] 
-                    };
-                }
-                return chamado;
-            });
-
-            localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
-            console.log(`Chamado #${ticketId} teve o campo ${campo} alterado para ${valor}`);
+            const novoItemHistorico = {
+                data: formatarTimestamp(new Date()),
+                dataReal: new Date(),
+                autor: adminUser,
+                acao: `${nomeCampo} alterado para "${valor || 'Nenhum'}".`
+            };
             
-            showToast(`${nomeCampo} do chamado #${ticketId} atualizado!`, "success");
-            initAdminDashboard(); 
+            db.collection("chamados").doc(ticketId).update({
+                [campo]: valor === 'null' ? null : valor,
+                historico: firebase.firestore.FieldValue.arrayUnion(novoItemHistorico)
+            })
+            .then(() => {
+                showToast(`${nomeCampo} do chamado atualizado!`, "success");
+                renderAdminList();
+            })
+            .catch((error) => {
+                console.error("Erro ao salvar alteração: ", error);
+                showToast("Erro ao salvar. Tente novamente.", "error");
+            });
         }
 
-        document.querySelectorAll('.departamento-select').forEach(select => {
-            select.addEventListener('change', function(event) {
-                const ticketId = event.target.dataset.id;
-                const valor = event.target.value;
-                salvarAlteracao(ticketId, 'departamento', valor, 'Departamento');
+        function attachAdminListeners() {
+            document.querySelectorAll('.departamento-select').forEach(select => {
+                select.addEventListener('change', function(event) {
+                    const ticketId = event.target.dataset.id;
+                    const valor = event.target.value;
+                    salvarAlteracao(ticketId, 'departamento', valor, 'Departamento');
+                });
             });
-        });
+            document.querySelectorAll('.status-select').forEach(select => {
+                select.addEventListener('change', function(event) {
+                    const ticketId = event.target.dataset.id;
+                    const valor = event.target.value;
+                    salvarAlteracao(ticketId, 'status', valor, 'Status');
+                });
+            });
+            document.querySelectorAll('.prioridade-select').forEach(select => {
+                select.addEventListener('change', function(event) {
+                    const ticketId = event.target.dataset.id;
+                    const valor = event.target.value;
+                    salvarAlteracao(ticketId, 'prioridade', valor, 'Prioridade');
+                });
+            });
+        }
 
-        document.querySelectorAll('.status-select').forEach(select => {
-            select.addEventListener('change', function(event) {
-                const ticketId = event.target.dataset.id;
-                const valor = event.target.value;
-                salvarAlteracao(ticketId, 'status', valor, 'Status');
-            });
-        });
-
-        document.querySelectorAll('.prioridade-select').forEach(select => {
-            select.addEventListener('change', function(event) {
-                const ticketId = event.target.dataset.id;
-                const valor = event.target.value;
-                salvarAlteracao(ticketId, 'prioridade', valor, 'Prioridade');
-            });
-        });
+        if (searchInput) {
+            searchInput.addEventListener('keyup', renderAdminList);
+        }
+        
+        renderAdminList();
     }
 
     function initUserDashboard() {
@@ -341,53 +331,86 @@ document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('campo-busca-user');
         
         if (!userTicketList) return;
-
-        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-
-        const chamados = JSON.parse(localStorage.getItem('chamados'));
         
-        const chamadosFiltrados = chamados.filter(chamado => {
-            const titulo = chamado.titulo.toLowerCase();
-            const id = chamado.id.toString();
-            return titulo.includes(searchTerm) || id.includes(searchTerm);
-        });
+        const user = auth.currentUser;
+        if (!user) return;
 
-        const chamadosAbertos = chamados.filter(c => c.status === 'Aberto').length;
-        if(summaryCount) {
-             summaryCount.textContent = chamadosAbertos;
+        function renderUserList() {
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+            db.collection("chamados")
+              .where("userId", "==", user.uid)
+              .orderBy("dataAbertura", "desc")
+              .get()
+              .then((querySnapshot) => {
+                
+                let chamados = [];
+                querySnapshot.forEach((doc) => {
+                    chamados.push({ id: doc.id, ...doc.data() });
+                });
+
+                const chamadosFiltrados = chamados.filter(chamado => {
+                    const titulo = chamado.titulo.toLowerCase();
+                    const id = chamado.id.toString().toLowerCase();
+                    return titulo.includes(searchTerm) || id.includes(searchTerm);
+                });
+
+                const chamadosAbertos = chamados.filter(c => c.status === 'Aberto').length;
+                if(summaryCount) {
+                     summaryCount.textContent = chamadosAbertos;
+                }
+                
+                if(summaryDate) {
+                    summaryDate.textContent = new Date().toLocaleDateString('pt-BR');
+                }
+
+                userTicketList.innerHTML = '<h3>Chamados em Andamento</h3>'; 
+
+                if (chamadosFiltrados.length === 0) {
+                    userTicketList.innerHTML += '<p>Nenhum chamado encontrado.</p>';
+                }
+
+                chamadosFiltrados.forEach(chamado => {
+                    const ticketCard = document.createElement('div');
+                    ticketCard.className = 'ticket-card card';
+                    ticketCard.innerHTML = `
+                        <div class="ticket-info">
+                            <h4>Chamado #${chamado.id.substring(0, 6)}... - ${chamado.titulo}</h4>
+                            <p>Status: <span class="status ${chamado.status.toLowerCase().replace(' ', '-')}">${chamado.status}</span></p>
+                        </div>
+                        <div class="ticket-actions">
+                            <button class="btn btn-primary btn-ver-detalhes" data-id="${chamado.id}">Detalhes</button>
+                            <button class="btn btn-accent btn-editar-chamado" data-id="${chamado.id}">Editar</button>
+                            <button class="btn btn-danger btn-excluir-chamado" data-id="${chamado.id}">Excluir</button>
+                        </div>
+                    `;
+                    userTicketList.appendChild(ticketCard);
+                });
+            })
+            .catch((error) => {
+                console.error("Erro ao buscar chamados do usuário: ", error);
+                showToast("Erro ao carregar seus chamados.", "error");
+            });
         }
         
-        if(summaryDate) {
-            summaryDate.textContent = new Date().toLocaleDateString('pt-BR');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', renderUserList);
         }
-
-        userTicketList.innerHTML = '<h3>Chamados em Andamento</h3>'; 
-
-        if (chamadosFiltrados.length === 0) {
-            userTicketList.innerHTML += '<p>Nenhum chamado encontrado.</p>';
-        }
-
-        chamadosFiltrados.forEach(chamado => {
-            const ticketCard = document.createElement('div');
-            ticketCard.className = 'ticket-card card';
-            ticketCard.innerHTML = `
-                <div class="ticket-info">
-                    <h4>Chamado #${chamado.id} - ${chamado.titulo}</h4>
-                    <p>Status: <span class="status ${chamado.status.toLowerCase().replace(' ', '-')}">${chamado.status}</span></p>
-                </div>
-                <div class="ticket-actions">
-                    <button class="btn btn-primary btn-ver-detalhes" data-id="${chamado.id}">Detalhes</button>
-                    <button class="btn btn-accent btn-editar-chamado" data-id="${chamado.id}">Editar</button>
-                    <button class="btn btn-danger btn-excluir-chamado" data-id="${chamado.id}">Excluir</button>
-                </div>
-            `;
-            userTicketList.appendChild(ticketCard);
-        });
+        
+        renderUserList();
     }
 
     function initAbrirChamadoForm() {
         const formAbrirChamado = document.querySelector('#form-abrir-chamado');
         if (formAbrirChamado) {
+            
+            const user = auth.currentUser;
+            if (!user) {
+                showToast("Você precisa estar logado para abrir um chamado.", "error");
+                window.location.href = 'index.html';
+                return;
+            }
+            
             formAbrirChamado.addEventListener('submit', function(event) {
                 event.preventDefault();
                 
@@ -395,12 +418,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const descricao = document.getElementById('descricao').value;
                 const categoria = document.getElementById('categoria').value;
                 
-                let chamados = JSON.parse(localStorage.getItem('chamados'));
-                
-                const novoId = new Date().getTime(); 
+                const dataAtual = new Date(); // Criamos um Date normal
                 
                 const novoChamado = {
-                    id: novoId,
                     titulo: titulo,
                     descricao: descricao,
                     categoria: categoria,
@@ -408,16 +428,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     departamento: null,
                     prioridade: "Não definida",
                     anexo: null,
+                    dataAbertura: getTimestampAtual(),
+                    userId: user.uid,
+                    autorNome: user.displayName || user.email,
                     historico: [
-                        { data: getTimestampAtual(), autor: "Sistema", acao: "Chamado aberto." }
+                        { 
+                            data: formatarTimestamp(dataAtual),
+                            dataReal: dataAtual,
+                            autor: "Sistema", 
+                            acao: "Chamado aberto." 
+                        }
                     ]
                 };
                 
-                chamados.push(novoChamado);
-                localStorage.setItem('chamados', JSON.stringify(chamados));
-                
-                console.log('Novo chamado salvo!', novoChamado);
-                window.location.href = 'confirmacao.html'; 
+                db.collection("chamados").add(novoChamado)
+                    .then((docRef) => {
+                        console.log("Novo chamado salvo com ID: ", docRef.id);
+                        window.location.href = 'confirmacao.html'; 
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao salvar novo chamado: ", error);
+                        showToast("Erro ao salvar chamado: " + error.message, "error");
+                    });
             });
         }
     }
@@ -428,83 +460,102 @@ document.addEventListener('DOMContentLoaded', function() {
         const formEditarChamado = document.querySelector('#form-editar-chamado');
 
         if (!ticketId || !formEditarChamado) {
-            console.error("ID do chamado ou formulário não encontrado.");
             return;
         }
 
-        const chamados = JSON.parse(localStorage.getItem('chamados'));
-        const chamadoParaEditar = chamados.find(c => c.id == ticketId);
-
-        if (!chamadoParaEditar) {
-            showToast("Chamado não encontrado!", "error");
-            window.location.href = 'dashboard.html';
+        const user = auth.currentUser;
+        if (!user) {
+            window.location.href = 'index.html';
             return;
         }
+        
+        const docRef = db.collection("chamados").doc(ticketId);
 
-        document.getElementById('titulo').value = chamadoParaEditar.titulo;
-        document.getElementById('descricao').value = chamadoParaEditar.descricao;
-        document.getElementById('categoria').value = chamadoParaEditar.categoria;
+        docRef.get()
+            .then((doc) => {
+                if (!doc.exists) {
+                    showToast("Chamado não encontrado!", "error");
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+                
+                const chamadoParaEditar = doc.data();
+                
+                if (chamadoParaEditar.userId !== user.uid && user.email !== 'adm@admin.com') {
+                    showToast("Você não tem permissão para editar este chamado.", "error");
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
 
-        formEditarChamado.addEventListener('submit', function(event) {
-            event.preventDefault();
+                document.getElementById('titulo').value = chamadoParaEditar.titulo;
+                document.getElementById('descricao').value = chamadoParaEditar.descricao;
+                document.getElementById('categoria').value = chamadoParaEditar.categoria;
 
-            const tituloAtualizado = document.getElementById('titulo').value;
-            const descricaoAtualizada = document.getElementById('descricao').value;
-            const categoriaAtualizada = document.getElementById('categoria').value;
+                formEditarChamado.addEventListener('submit', function(event) {
+                    event.preventDefault();
 
-            const chamadosAtualizados = chamados.map(chamado => {
-                if (chamado.id == ticketId) {
+                    const tituloAtualizado = document.getElementById('titulo').value;
+                    const descricaoAtualizada = document.getElementById('descricao').value;
+                    const categoriaAtualizada = document.getElementById('categoria').value;
+
+                    const dataAtual = new Date();
                     const novoItemHistorico = {
-                        data: getTimestampAtual(),
+                        data: formatarTimestamp(dataAtual),
+                        dataReal: dataAtual,
                         autor: localStorage.getItem('usuarioLogado') || "Usuário",
                         acao: "Dados do chamado foram editados."
                     };
-                    return {
-                        ...chamado,
+
+                    docRef.update({
                         titulo: tituloAtualizado,
                         descricao: descricaoAtualizada,
                         categoria: categoriaAtualizada,
-                        historico: [...chamado.historico, novoItemHistorico]
-                    };
-                }
-                return chamado;
+                        historico: firebase.firestore.FieldValue.arrayUnion(novoItemHistorico)
+                    })
+                    .then(() => {
+                        alert("Chamado atualizado com sucesso!");
+                        window.location.href = 'dashboard.html';
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao atualizar: ", error);
+                        showToast("Erro ao salvar. Tente novamente.", "error");
+                    });
+                });
+            })
+            .catch((error) => {
+                console.error("Erro ao buscar chamado para editar: ", error);
+                showToast("Erro ao carregar dados.", "error");
             });
-
-            localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
-
-            alert("Chamado atualizado com sucesso!");
-            window.location.href = 'dashboard.html';
-        });
     }
 
     function initDetalhesPage() {
         const params = new URLSearchParams(window.location.search);
         const ticketId = params.get('id');
-        
         if (!ticketId) return; 
 
-        const chamados = JSON.parse(localStorage.getItem('chamados'));
-        const chamado = chamados.find(c => c.id == ticketId);
-
-        if (!chamado) {
-            showToast("Chamado não encontrado.", "error");
-            window.location.href = "dashboard.html";
-            return;
-        }
-
-        document.getElementById('detalhes-titulo').textContent = `Chamado #${chamado.id} - ${chamado.titulo}`;
-        document.getElementById('detalhes-status').textContent = chamado.status;
-        document.getElementById('detalhes-status').className = `status ${chamado.status.toLowerCase().replace(' ', '-')}`;
-        document.getElementById('detalhes-departamento').textContent = chamado.departamento || 'Não designado';
-        document.getElementById('detalhes-prioridade').textContent = chamado.prioridade || 'Não definida';
-        document.getElementById('detalhes-descricao').textContent = chamado.descricao;
-
+        const docRef = db.collection("chamados").doc(ticketId);
         const historyList = document.getElementById('detalhes-historico');
         
-        function renderizarHistorico() {
+        function renderizarHistorico(historico) {
             historyList.innerHTML = ''; 
-            if (chamado.historico && chamado.historico.length > 0) {
-                chamado.historico.forEach(item => {
+            if (historico && historico.length > 0) {
+                
+                const historicoOrdenado = historico.map(item => {
+                    // Converte Timestamps do Firestore para Date objects para ordenar
+                    if (item.dataReal && item.dataReal.toDate) {
+                        item.dataRealJS = item.dataReal.toDate();
+                    } else if (item.dataReal instanceof Date) {
+                        item.dataRealJS = item.dataReal;
+                    } else {
+                        // Fallback para datas antigas
+                        item.dataRealJS = new Date(0); 
+                    }
+                    return item;
+                });
+
+                historicoOrdenado.sort((a, b) => a.dataRealJS - b.dataRealJS);
+                
+                historicoOrdenado.forEach(item => {
                     const li = document.createElement('li');
                     li.innerHTML = `<strong>[${item.data}]</strong> - Atualização realizada por ${item.autor}: ${item.acao}`;
                     historyList.appendChild(li);
@@ -513,8 +564,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 historyList.innerHTML = '<li>Nenhuma atualização registrada.</li>';
             }
         }
-        
-        renderizarHistorico();
+
+        docRef.get()
+            .then((doc) => {
+                if (!doc.exists) {
+                    showToast("Chamado não encontrado.", "error");
+                    window.location.href = "dashboard.html";
+                    return;
+                }
+                
+                const chamado = doc.data();
+
+                document.getElementById('detalhes-titulo').textContent = `Chamado #${doc.id.substring(0, 6)}... - ${chamado.titulo}`;
+                document.getElementById('detalhes-status').textContent = chamado.status;
+                document.getElementById('detalhes-status').className = `status ${chamado.status.toLowerCase().replace(' ', '-')}`;
+                document.getElementById('detalhes-departamento').textContent = chamado.departamento || 'Não designado';
+                document.getElementById('detalhes-prioridade').textContent = chamado.prioridade || 'Não definida';
+                document.getElementById('detalhes-descricao').textContent = chamado.descricao;
+                
+                renderizarHistorico(chamado.historico);
+            })
+            .catch((error) => {
+                console.error("Erro ao buscar detalhes: ", error);
+                showToast("Erro ao carregar detalhes.", "error");
+            });
+
 
         const commentForm = document.getElementById('form-add-comment');
         if (commentForm) {
@@ -525,19 +599,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 const acao = commentTextarea.value;
                 
                 if (acao && acao.trim() !== "") {
-                    const dataFormatada = getTimestampAtual();
                     
+                    const dataAtual = new Date();
                     const novoItemHistorico = {
-                        data: dataFormatada,
+                        data: formatarTimestamp(dataAtual),
+                        dataReal: dataAtual,
                         autor: localStorage.getItem('usuarioLogado') || "Usuário", 
                         acao: acao
                     };
                     
-                    const chamadoIndex = chamados.findIndex(c => c.id == ticketId);
-                    if (chamadoIndex > -1) {
-                        chamados[chamadoIndex].historico.push(novoItemHistorico);
-                        localStorage.setItem('chamados', JSON.stringify(chamados));
-                        
+                    docRef.update({
+                        historico: firebase.firestore.FieldValue.arrayUnion(novoItemHistorico)
+                    })
+                    .then(() => {
                         const li = document.createElement('li');
                         li.innerHTML = `<strong>[${novoItemHistorico.data}]</strong> - Atualização realizada por ${novoItemHistorico.autor}: ${novoItemHistorico.acao}`;
                         historyList.appendChild(li);
@@ -546,9 +620,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (historyList.querySelector('li').textContent === "Nenhuma atualização registrada.") {
                              historyList.querySelector('li').remove();
                         }
-
                         showToast("Comentário adicionado!", "success");
-                    }
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao adicionar comentário: ", error);
+                        showToast("Erro ao salvar comentário.", "error");
+                    });
                 }
             });
         }
@@ -643,24 +720,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 const ticketId = target.dataset.id;
                 
                 showConfirmModal("Tem certeza que deseja excluir este chamado? Esta ação não pode ser desfeita.", function() {
-                    let chamados = JSON.parse(localStorage.getItem('chamados'));
-                    const chamadosAtualizados = chamados.filter(chamado => chamado.id != ticketId);
-                    localStorage.setItem('chamados', JSON.stringify(chamadosAtualizados));
                     
-                    showToast("Chamado excluído com sucesso.", "success");
-                    
-                    target.closest('.ticket-card').remove();
-                    
-                    const summaryCount = document.querySelector('.summary-details span');
-                    if (summaryCount) {
-                        const chamadosAbertos = chamadosAtualizados.filter(c => c.status === 'Aberto').length;
-                        summaryCount.textContent = chamadosAbertos;
-                    }
+                    db.collection("chamados").doc(ticketId).delete()
+                        .then(() => {
+                            showToast("Chamado excluído com sucesso.", "success");
+                            target.closest('.ticket-card').remove();
+                            
+                            const summaryCount = document.querySelector('#user-ticket-list .summary-details span');
+                            if (summaryCount) {
+                                initUserDashboard();
+                            }
+                        })
+                        .catch((error) => {
+                            console.error("Erro ao excluir chamado: ", error);
+                            showToast("Erro ao excluir. Tente novamente.", "error");
+                        });
                 });
             }
 
             if (target.matches('#form-abrir-chamado .btn-secondary')) {
-                 showToast("Funcionalidade 'Adicionar Anexos' ainda não implementada.", "info");
+                 showToast("Funcionalidade 'Adicionar Anexos' será implementada na Fase 4.", "info");
             }
 
             const id = target.id;
@@ -675,37 +754,59 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     
-    setupDatabase();
-    
-    injectNotificationContainers(); 
-    injetaNavbar(); 
-    
-    bindGlobalNavigators(); 
+    auth.onAuthStateChanged(function(user) {
+        
+        injectNotificationContainers(); 
+        injetaNavbar(); 
+        
+        bindGlobalNavigators(); 
 
-    const path = window.location.pathname; 
+        setupDatabase();
+        
+        const path = window.location.pathname; 
 
-    if (path.endsWith('index.html') || path === '/') {
-        initLoginPage();
-    } else if (path.endsWith('registrar.html')) { 
-        initRegistrarPage();
-    } else if (path.endsWith('dashboard-admin.html')) {
-        initAdminDashboard();
-        const searchInputAdmin = document.getElementById('campo-busca-admin');
-        if (searchInputAdmin) {
-            searchInputAdmin.addEventListener('keyup', initAdminDashboard);
+        if (!user) {
+            if (!path.endsWith('index.html') && !path.endsWith('registrar.html')) {
+                console.log("Usuário não logado, redirecionando para o login.");
+                window.location.href = 'index.html';
+            } else if (path.endsWith('index.html') || path === '/') {
+                initLoginPage();
+            } else if (path.endsWith('registrar.html')) { 
+                initRegistrarPage();
+            }
+        } 
+        else {
+            if (path.endsWith('index.html') || path.endsWith('registrar.html') || path === '/') {
+                console.log("Usuário já logado, redirecionando para o dashboard.");
+                if (user.email === 'adm@admin.com') {
+                    window.location.href = 'dashboard-admin.html';
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
+                return;
+            }
+
+            if (path.endsWith('dashboard-admin.html')) {
+                initAdminDashboard();
+            } else if (path.endsWith('dashboard.html')) {
+                initUserDashboard();
+            } else if (path.endsWith('abrir-chamado.html')) {
+                initAbrirChamadoForm();
+            } else if (path.endsWith('editar-chamado.html')) { 
+                initEditarChamadoPage();
+            } else if (path.endsWith('detalhes-chamado.html')) {
+                initDetalhesPage();
+            }
+            
+            const searchInputAdmin = document.getElementById('campo-busca-admin');
+            if (searchInputAdmin) {
+                searchInputAdmin.addEventListener('keyup', initAdminDashboard);
+            }
+            const searchInputUser = document.getElementById('campo-busca-user');
+            if (searchInputUser) {
+                searchInputUser.addEventListener('keyup', initUserDashboard);
+            }
         }
-    } else if (path.endsWith('dashboard.html')) {
-        initUserDashboard();
-        const searchInputUser = document.getElementById('campo-busca-user');
-        if (searchInputUser) {
-            searchInputUser.addEventListener('keyup', initUserDashboard);
-        }
-    } else if (path.endsWith('abrir-chamado.html')) {
-        initAbrirChamadoForm();
-    } else if (path.endsWith('editar-chamado.html')) { 
-        initEditarChamadoPage();
-    } else if (path.endsWith('detalhes-chamado.html')) {
-        initDetalhesPage();
-    }
+    });
     
 });
