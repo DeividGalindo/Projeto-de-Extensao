@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const auth = firebase.auth();
     const db = firebase.firestore();
     
-    // Váriavel global temporária para guardar o anexo
     let anexoPendente = null;
 
     function getTimestampAtual() {
@@ -142,6 +141,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initLoginPage() {
         const loginForm = document.querySelector('.login-box form');
+        const btnRecuperar = document.getElementById('btn-recuperar-senha');
+        
         if (loginForm) {
             loginForm.addEventListener('submit', function(event) {
                 event.preventDefault();
@@ -165,6 +166,32 @@ document.addEventListener('DOMContentLoaded', function() {
                             showToast("Email ou senha incorretos.", "error");
                         } else {
                             showToast("Erro ao fazer login. Tente novamente.", "error");
+                        }
+                    });
+            });
+        }
+        
+        if (btnRecuperar) {
+            btnRecuperar.addEventListener('click', function(event) {
+                event.preventDefault();
+                const emailInput = document.getElementById('email');
+                const email = emailInput.value;
+
+                if (email === "") {
+                    showToast("Por favor, digite seu email no campo 'Email'.", "error");
+                    return;
+                }
+
+                auth.sendPasswordResetEmail(email)
+                    .then(() => {
+                        showToast("Email de redefinição enviado! Verifique sua caixa de entrada.", "success");
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao enviar email de redefinição:", error.code);
+                        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-value') {
+                            showToast("Nenhuma conta encontrada com este email.", "error");
+                        } else {
+                            showToast("Erro ao enviar email. Tente novamente.", "error");
                         }
                     });
             });
@@ -429,9 +456,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
 
-                    if (file.size > 2 * 1024 * 1024) { // Limite de 2MB
+                    if (file.size > 2 * 1024 * 1024) { 
                         showToast("Arquivo muito grande. O limite é de 2MB.", "error");
-                        anexoInput.value = ""; // Limpa o input
+                        anexoInput.value = ""; 
                         anexoPendente = null;
                         fileNameDisplay.textContent = "Arquivo muito grande!";
                         return;
@@ -439,8 +466,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        anexoPendente = e.target.result; // Salva o Base64
-                        fileNameDisplay.textContent = file.name; // Mostra o nome do arquivo
+                        anexoPendente = e.target.result; 
+                        fileNameDisplay.textContent = file.name; 
                         showToast("Anexo pronto para envio.", "success");
                     };
                     reader.onerror = function() {
@@ -448,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         anexoPendente = null;
                         fileNameDisplay.textContent = "Erro ao ler arquivo.";
                     };
-                    reader.readAsDataURL(file); // Converte para Base64
+                    reader.readAsDataURL(file); 
                 });
             }
             
@@ -789,6 +816,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             localStorage.removeItem('anexo_' + ticketId);
                             
                             showToast("Chamado excluído com sucesso.", "success");
+                            
                             target.closest('.ticket-card').remove();
                             
                             const summaryCount = document.querySelector('#user-ticket-list .summary-details span');
@@ -804,8 +832,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (target.matches('#form-abrir-chamado .btn-secondary')) {
-                // Esta lógica agora está no initAbrirChamadoForm, 
-                // o clique é tratado pelo <label for="anexo">
+                 showToast("Funcionalidade 'Adicionar Anexos' ainda não implementada.", "info");
             }
 
             const id = target.id;
