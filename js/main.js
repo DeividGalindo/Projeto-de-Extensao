@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 chamadosFiltrados = chamadosFiltrados.filter(chamado => {
                     const titulo = chamado.titulo.toLowerCase();
-                    const id = chamado.id.toString().toLowerCase();
+                    const id = chamado.numeroChamado ? chamado.numeroChamado.toString() : '';
                     return titulo.includes(searchTerm) || id.includes(searchTerm);
                 });
 
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     ticketCard.innerHTML = `
                         <div class="ticket-info">
-                            <h4>Chamado #${chamado.id.substring(0, 6)}... - ${chamado.titulo}</h4>
+                            <h4>Chamado #${chamado.numeroChamado || chamado.id.substring(0,6)} - ${chamado.titulo}</h4>
                             <p>Status: <span class="status ${chamado.status.toLowerCase().replace(' ', '-')}">${chamado.status}</span></p>
                         </div>
 
@@ -272,9 +272,10 @@ document.addEventListener('DOMContentLoaded', function() {
         function salvarAlteracao(ticketId, campo, valor, nomeCampo) {
             const adminUser = localStorage.getItem('usuarioLogado') || "Admin"; 
             
+            const dataAtual = new Date();
             const novoItemHistorico = {
-                data: formatarTimestamp(new Date()),
-                dataReal: new Date(),
+                data: formatarTimestamp(dataAtual),
+                dataReal: dataAtual,
                 autor: adminUser,
                 acao: `${nomeCampo} alterado para "${valor || 'Nenhum'}".`
             };
@@ -351,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const chamadosFiltrados = chamados.filter(chamado => {
                     const titulo = chamado.titulo.toLowerCase();
-                    const id = chamado.id.toString().toLowerCase();
+                    const id = chamado.numeroChamado ? chamado.numeroChamado.toString() : '';
                     return titulo.includes(searchTerm) || id.includes(searchTerm);
                 });
 
@@ -375,7 +376,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     ticketCard.className = 'ticket-card card';
                     ticketCard.innerHTML = `
                         <div class="ticket-info">
-                            <h4>Chamado #${chamado.id.substring(0, 6)}... - ${chamado.titulo}</h4>
+                            <h4>Chamado #${chamado.numeroChamado || chamado.id.substring(0,6)} - ${chamado.titulo}</h4>
                             <p>Status: <span class="status ${chamado.status.toLowerCase().replace(' ', '-')}">${chamado.status}</span></p>
                         </div>
                         <div class="ticket-actions">
@@ -418,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const descricao = document.getElementById('descricao').value;
                 const categoria = document.getElementById('categoria').value;
                 
-                const dataAtual = new Date(); // Criamos um Date normal
+                const dataAtual = new Date();
                 
                 const novoChamado = {
                     titulo: titulo,
@@ -429,6 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     prioridade: "Não definida",
                     anexo: null,
                     dataAbertura: getTimestampAtual(),
+                    numeroChamado: dataAtual.getTime().toString().slice(-6),
                     userId: user.uid,
                     autorNome: user.displayName || user.email,
                     historico: [
@@ -541,13 +543,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (historico && historico.length > 0) {
                 
                 const historicoOrdenado = historico.map(item => {
-                    // Converte Timestamps do Firestore para Date objects para ordenar
                     if (item.dataReal && item.dataReal.toDate) {
                         item.dataRealJS = item.dataReal.toDate();
                     } else if (item.dataReal instanceof Date) {
                         item.dataRealJS = item.dataReal;
                     } else {
-                        // Fallback para datas antigas
                         item.dataRealJS = new Date(0); 
                     }
                     return item;
@@ -575,7 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const chamado = doc.data();
 
-                document.getElementById('detalhes-titulo').textContent = `Chamado #${doc.id.substring(0, 6)}... - ${chamado.titulo}`;
+                document.getElementById('detalhes-titulo').textContent = `Chamado #${chamado.numeroChamado || doc.id.substring(0,6)} - ${chamado.titulo}`;
                 document.getElementById('detalhes-status').textContent = chamado.status;
                 document.getElementById('detalhes-status').className = `status ${chamado.status.toLowerCase().replace(' ', '-')}`;
                 document.getElementById('detalhes-departamento').textContent = chamado.departamento || 'Não designado';
