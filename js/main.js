@@ -1,12 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // --- FUNÇÃO HELPER DE TIMESTAMP ---
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
     function getTimestampAtual() {
         const data = new Date();
         return data.toLocaleString('pt-BR'); 
     }
 
-    // --- FUNÇÕES DE UI (TOAST E MODAL) ---
     function injectNotificationContainers() {
         const toastContainer = document.createElement('div');
         toastContainer.id = 'toast-container';
@@ -77,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- FUNÇÃO DE UI (NAVBAR) ---
     function injetaNavbar() {
         const header = document.querySelector('.page-header');
         if (!header) {
@@ -98,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
         header.insertAdjacentHTML('beforeend', navbarHTML);
     }
 
-    // Listener global para fechar o menu dropdown
     document.addEventListener('click', function(event) {
         const dropdownMenu = document.querySelector('.dropdown-menu');
         if (!dropdownMenu || !dropdownMenu.classList.contains('active')) {
@@ -111,8 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- 1. SETUP DO BANCO DE DADOS (localStorage) ---
     function setupDatabase() {
+        
         if (!localStorage.getItem('chamados')) {
             const chamadosIniciais = [
                 { 
@@ -123,6 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     status: "Em Progresso", 
                     departamento: "Hardware - Pedro Afonso",
                     prioridade: "Alta",
+                    anexo: null,
                     historico: [
                         { data: "01/11/2025 10:30:15", autor: "Maria", acao: "Verificação inicial concluída." },
                         { data: "02/11/2025 14:02:00", autor: "João (TI)", acao: "Em andamento." }
@@ -136,6 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     status: "Aberto", 
                     departamento: null,
                     prioridade: "Média",
+                    anexo: null,
                     historico: [
                         { data: "03/11/2025 09:15:45", autor: "Sistema", acao: "Chamado aberto." }
                     ]
@@ -148,6 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     status: "Aberto", 
                     departamento: null,
                     prioridade: "Baixa",
+                    anexo: null,
                     historico: [
                          { data: "04/11/2025 16:00:10", autor: "Sistema", acao: "Chamado aberto." }
                     ]
@@ -156,51 +158,45 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('chamados', JSON.stringify(chamadosIniciais));
         }
 
-        if (!localStorage.getItem('users')) {
-            const adminUser = {
-                username: "adm",
-                nomeCompleto: "Administrador", 
-                email: "adm@admin.com",
-                password: "adm"
-            };
-            localStorage.setItem('users', JSON.stringify([adminUser]));
-        }
-
         window.appData = {
             departamentos: ["Hardware - Pedro Afonso", "Software - Carlos Eduardo Marinho", "Rede - Sandro Pinto", "Outros - Atendente Geral"]
         };
     }
 
-    // --- 2. LÓGICA DA PÁGINA DE LOGIN (index.html) ---
     function initLoginPage() {
         const loginForm = document.querySelector('.login-box form');
         if (loginForm) {
             loginForm.addEventListener('submit', function(event) {
                 event.preventDefault();
-                const username = document.getElementById('username').value;
+                const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
 
-                const users = JSON.parse(localStorage.getItem('users'));
-                const user = users.find(u => u.username === username && u.password === password);
-
-                if (user) {
-                    localStorage.setItem('usuarioLogado', user.nomeCompleto); 
-                    
-                    if (user.username === 'adm') {
-                        console.log('Login de Administrador bem-sucedido!');
-                        window.location.href = 'dashboard-admin.html';
-                    } else {
-                        console.log('Login de Usuário Comum bem-sucedido!');
-                        window.location.href = 'dashboard.html';
-                    }
-                } else {
-                    showToast("Usuário ou senha incorretos.", "error");
-                }
+                auth.signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        
+                        localStorage.setItem('usuarioLogado', user.displayName || user.email); 
+                        
+                        if (user.email === 'adm@admin.com') {
+                            console.log('Login de Administrador bem-sucedido!');
+                            window.location.href = 'dashboard-admin.html';
+                        } else {
+                            console.log('Login de Usuário Comum bem-sucedido!');
+                            window.location.href = 'dashboard.html';
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Erro de login:", error.code);
+                        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                            showToast("Email ou senha incorretos.", "error");
+                        } else {
+                            showToast("Erro ao fazer login. Tente novamente.", "error");
+                        }
+                    });
             });
         }
     }
 
-    // --- 3. LÓGICA DO PAINEL DO ADMIN (dashboard-admin.html) ---
     function initAdminDashboard() {
         const adminTicketList = document.getElementById('admin-ticket-list');
         const searchInput = document.getElementById('campo-busca-admin');
@@ -338,7 +334,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- 4. LÓGICA DO PAINEL DO USUÁRIO (dashboard.html) ---
     function initUserDashboard() {
         const userTicketList = document.getElementById('user-ticket-list');
         const summaryCount = document.querySelector('.summary-details span');
@@ -390,7 +385,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- 5. LÓGICA DO FORMULÁRIO (abrir-chamado.html) ---
     function initAbrirChamadoForm() {
         const formAbrirChamado = document.querySelector('#form-abrir-chamado');
         if (formAbrirChamado) {
@@ -412,7 +406,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     categoria: categoria,
                     status: "Aberto",
                     departamento: null,
-                    prioridade: "Não definida", 
+                    prioridade: "Não definida",
+                    anexo: null,
                     historico: [
                         { data: getTimestampAtual(), autor: "Sistema", acao: "Chamado aberto." }
                     ]
@@ -427,7 +422,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- 6. LÓGICA DA PÁGINA DE EDIÇÃO (editar-chamado.html) ---
     function initEditarChamadoPage() {
         const params = new URLSearchParams(window.location.search);
         const ticketId = params.get('id');
@@ -483,7 +477,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- 7. LÓGICA DA PÁGINA DE DETALHES (detalhes-chamado.html) ---
     function initDetalhesPage() {
         const params = new URLSearchParams(window.location.search);
         const ticketId = params.get('id');
@@ -561,14 +554,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- 8. LÓGICA DA PÁGINA DE REGISTRO (registrar.html) ---
     function initRegistrarPage() {
         const registrarForm = document.querySelector('#form-registrar');
         if (registrarForm) {
             registrarForm.addEventListener('submit', function(event) {
                 event.preventDefault();
 
-                const username = document.getElementById('username').value;
                 const nomeCompleto = document.getElementById('nomeCompleto').value;
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
@@ -579,32 +570,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     return; 
                 }
 
-                const users = JSON.parse(localStorage.getItem('users'));
-                const usuarioExistente = users.find(u => u.username === username || u.email === email);
-
-                if (usuarioExistente) {
-                    showToast("Este Login (Nome de usuário) ou Email já está em uso.", "error");
-                    return;
-                }
-
-                const novoUsuario = {
-                    username: username,
-                    nomeCompleto: nomeCompleto,
-                    email: email,
-                    password: password 
-                };
-
-                users.push(novoUsuario);
-                localStorage.setItem('users', JSON.stringify(users));
-
-                alert("Conta criada com sucesso! Você será redirecionado para a página de login.");
-                window.location.href = 'index.html';
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        
+                        return user.updateProfile({
+                            displayName: nomeCompleto
+                        });
+                    })
+                    .then(() => {
+                        alert("Conta criada com sucesso! Você será redirecionado para a página de login.");
+                        window.location.href = 'index.html';
+                    })
+                    .catch((error) => {
+                        console.error("Erro de registro:", error.code);
+                        if (error.code === 'auth/email-already-in-use') {
+                            showToast("Este email já está em uso.", "error");
+                        } else if (error.code === 'auth/weak-password') {
+                            showToast("Sua senha é muito fraca. Use pelo menos 6 caracteres.", "error");
+                        } else {
+                            showToast("Erro ao criar conta. Tente novamente.", "error");
+                        }
+                    });
             });
         }
     }
 
 
-    // --- 9. LÓGICA DE NAVEGAÇÃO GLOBAL (Para todos os botões) ---
     function bindGlobalNavigators() {
         document.body.addEventListener('click', function(event) {
             const target = event.target; 
@@ -619,12 +611,18 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (target.matches('.logout-link')) {
                 event.preventDefault(); 
-                localStorage.removeItem('usuarioLogado'); 
-                showToast("Você foi desconectado.", "info");
                 
-                setTimeout(() => {
-                    window.location.href = 'index.html'; 
-                }, 1500);
+                auth.signOut().then(() => {
+                    localStorage.removeItem('usuarioLogado'); 
+                    showToast("Você foi desconectado.", "info");
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html'; 
+                    }, 1500);
+                }).catch((error) => {
+                    console.error("Erro ao fazer logout:", error);
+                    showToast("Erro ao desconectar.", "error");
+                });
             }
             
             if (target.matches('.summary-card .btn-accent')) {
@@ -653,8 +651,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     target.closest('.ticket-card').remove();
                     
-                    // Atualiza a contagem no resumo (verifica se está na página do usuário)
-                    const summaryCount = document.querySelector('#user-ticket-list .summary-details span');
+                    const summaryCount = document.querySelector('.summary-details span');
                     if (summaryCount) {
                         const chamadosAbertos = chamadosAtualizados.filter(c => c.status === 'Aberto').length;
                         summaryCount.textContent = chamadosAbertos;
@@ -677,8 +674,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    
-    // --- ROTEADOR PRINCIPAL ---
     
     setupDatabase();
     
