@@ -154,11 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const user = userCredential.user;
                         localStorage.setItem('usuarioLogado', user.displayName || user.email); 
                         
-                        if (user.email === 'adm@admin.com') {
-                            window.location.href = 'dashboard-admin.html';
-                        } else {
-                            window.location.href = 'dashboard.html';
-                        }
+                        console.log("Login OK. O onAuthStateChanged vai redirecionar.");
                     })
                     .catch((error) => {
                         console.error("Erro de login:", error.code);
