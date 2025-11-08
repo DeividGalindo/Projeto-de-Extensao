@@ -810,3 +810,18 @@ body {
 #form-alocar-chamado .modal-actions {
     margin-top: 15px;
 }
+
+.anexo-card.com-anexo #anexo-placeholder {
+    display: none; 
+}
+
+.anexo-card img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 500px; 
+    object-fit: contain;
+    border-radius: var(--border-radius);
+    margin-top: 10px;
+    background-color: #000; 
+}
