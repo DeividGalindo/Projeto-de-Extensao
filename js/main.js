@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let filtroStatusUsuario = 'todos';
     let filtroStatusAdmin = 'todos';
 
-    // Variável para guardar o ID do ticket a ser alocado
     let ticketIdParaAlocar = null;
 
     function getTimestampAtual() {
@@ -30,11 +29,9 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             return "Data inválida";
         }
-        // Formato DD/MM/AAAA HH:MM
         return data.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 
-    // --- NOVA FUNÇÃO PARA ATUALIZAR O RELÓGIO ---
     function iniciarRelogio() {
         const elementoData = document.getElementById('admin-data-atual');
         if (!elementoData) return;
@@ -51,15 +48,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 minute: '2-digit'
             });
             
-            // Atualiza o HTML
             elementoData.innerHTML = `
                 ${dataFormatada}
                 <span style="display: block; font-size: 0.8em; opacity: 0.7;">${horaFormatada}</span>
             `;
         }
 
-        atualizar(); // Chama imediatamente
-        setInterval(atualizar, 60000); // Atualiza a cada minuto
+        atualizar();
+        setInterval(atualizar, 60000);
     }
 
 
@@ -68,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
         toastContainer.id = 'toast-container';
         document.body.appendChild(toastContainer);
 
-        // Modal de Confirmação (Excluir)
         const modalConfirmHTML = `
             <div id="modal-overlay">
                 <div class="modal-box">
@@ -83,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         document.body.insertAdjacentHTML('beforeend', modalConfirmHTML);
 
-        // --- NOVO MODAL DE ALOCAÇÃO ---
         const modalAlocarHTML = `
             <div id="alocar-modal-overlay">
                 <div class="modal-box">
@@ -112,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="input-group">
                             <label for="alocar-departamento">Atribuir para (Departamento)</label>
                             <select id="alocar-departamento">
-                                </select>
+                            </select>
                         </div>
 
                         <div class="modal-actions">
@@ -176,12 +170,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- NOVA FUNÇÃO PARA ABRIR O MODAL DE ALOCAÇÃO ---
     async function showAlocarModal(ticketId) {
         const overlay = document.getElementById('alocar-modal-overlay');
         if (!overlay) return;
 
-        // 1. Buscar dados atuais do chamado
         try {
             const docRef = db.collection("chamados").doc(ticketId);
             const doc = await docRef.get();
@@ -191,23 +183,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const chamado = doc.data();
 
-            // 2. Armazenar o ID para o submit
             ticketIdParaAlocar = ticketId;
             
-            // 3. Preencher os dropdowns com os dados atuais
             document.getElementById('alocar-modal-title').textContent = `Alocar Chamado #${chamado.numeroChamado || ticketId.substring(0,6)}`;
             document.getElementById('alocar-categoria').value = chamado.categoria || 'outros';
             document.getElementById('alocar-status').value = chamado.status || 'Aberto';
 
-            // Preencher dropdown de departamentos
             const deptoSelect = document.getElementById('alocar-departamento');
-            deptoSelect.innerHTML = '<option value="null">Nenhum</option>'; // Opção padrão
+            deptoSelect.innerHTML = '<option value="null">Nenhum</option>';
             window.appData.departamentos.forEach(depto => {
                 const isSelected = chamado.departamento === depto ? 'selected' : '';
                 deptoSelect.innerHTML += `<option value="${depto}" ${isSelected}>${depto}</option>`;
             });
 
-            // 4. Exibir o modal
             overlay.classList.add('show');
 
         } catch (err) {
@@ -216,13 +204,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- NOVA FUNÇÃO PARA FECHAR O MODAL DE ALOCAÇÃO ---
     function closeAlocarModal() {
         const overlay = document.getElementById('alocar-modal-overlay');
         if (overlay) {
             overlay.classList.remove('show');
         }
-        ticketIdParaAlocar = null; // Limpa o ID
+        ticketIdParaAlocar = null;
     }
 
 
@@ -268,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function initLoginPage() {
-        const loginForm = document.querySelector('.login-box form');
+        const loginForm = document.getElementById('form-login'); // Alterado para ID
         if (loginForm) {
             loginForm.addEventListener('submit', function(event) {
                 event.preventDefault();
@@ -991,7 +978,6 @@ document.addEventListener('DOMContentLoaded', function() {
                  window.location.href = `editar-chamado.html?id=${ticketId}`;
             }
 
-            // --- NOVO EVENTO: CLICAR EM "ALOCAR" ---
             if (target.classList.contains('btn-alocar-chamado')) {
                 const ticketId = target.dataset.id;
                 showAlocarModal(ticketId);
@@ -1023,13 +1009,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // Eventos do Modal de Alocação
             if (id === 'alocar-btn-cancel') {
                 closeAlocarModal();
             }
         });
 
-        // Event listener para o SUBMIT do formulário de alocação
         const formAlocar = document.getElementById('form-alocar-chamado');
         if (formAlocar) {
             formAlocar.addEventListener('submit', function(event) {
@@ -1040,7 +1024,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const novoStatus = document.getElementById('alocar-status').value;
                 const novoDepto = document.getElementById('alocar-departamento').value;
 
-                // Salva as alterações
                 salvarAlteracao(ticketIdParaAlocar, 'categoria', novaCategoria, 'Categoria');
                 salvarAlteracao(ticketIdParaAlocar, 'status', novoStatus, 'Status');
                 salvarAlteracao(ticketIdParaAlocar, 'departamento', novoDepto, 'Departamento');
@@ -1060,32 +1043,35 @@ document.addEventListener('DOMContentLoaded', function() {
         bindGlobalNavigators(); 
 
         setupDatabase();
-        iniciarRelogio(); // <-- Chamada do Relógio
+        iniciarRelogio(); 
         
-        const path = window.location.pathname; 
+        const onLoginPage = document.querySelector('.login-box');
+        const onAppPage = document.querySelector('.app-layout');
 
         if (!user) {
-            localStorage.removeItem('usuarioLogado');
-            localStorage.removeItem('usuarioRole');
-            localStorage.removeItem('usuarioUid');
             
-            if (!path.endsWith('index.html') && !path.endsWith('registrar.html') && !path.endsWith('esqueci-senha.html') && !path.endsWith('aguarde-aprovacao.html')) {
+            if (onAppPage) {
                 console.log("Usuário não logado, redirecionando para o login.");
                 window.location.href = 'index.html';
-            } else if (path.endsWith('index.html') || path === '/') {
-                initLoginPage();
-            } else if (path.endsWith('registrar.html')) { 
-                initRegistrarPage();
-            } else if (path.endsWith('esqueci-senha.html')) {
-                initEsqueciSenhaPage();
+                return;
             }
+
+            if (onLoginPage) {
+                if (document.getElementById('form-login')) { 
+                    initLoginPage();
+                } else if (document.getElementById('form-registrar')) { 
+                    initRegistrarPage();
+                } else if (document.getElementById('form-esqueci-senha')) { 
+                    initEsqueciSenhaPage();
+                }
+            }
+            
         } 
         else {
+            
             localStorage.setItem('usuarioLogado', user.displayName || user.email);
             localStorage.setItem('usuarioUid', user.uid);
             
-            const onLoginPage = path.endsWith('index.html') || path.endsWith('registrar.html') || path.endsWith('esqueci-senha.html') || path === '/';
-
             if (onLoginPage) {
                 if (user.email === 'adm@admin.com') {
                     window.location.href = 'dashboard-admin.html';
@@ -1095,25 +1081,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            if (path.endsWith('dashboard-admin.html')) {
-                initAdminDashboard();
-            } else if (path.endsWith('dashboard.html')) {
-                initUserDashboard();
-            } else if (path.endsWith('abrir-chamado.html')) {
-                initAbrirChamadoForm();
-            } else if (path.endsWith('editar-chamado.html')) { 
-                initEditarChamadoPage();
-            } else if (path.endsWith('detalhes-chamado.html')) {
-                initDetalhesPage();
-            }
-            
-            const searchInputAdmin = document.getElementById('campo-busca-admin');
-            if (searchInputAdmin) {
-                searchInputAdmin.addEventListener('keyup', renderAdminList);
-            }
-            const searchInputUser = document.getElementById('campo-busca-user');
-            if (searchInputUser) {
-                searchInputUser.addEventListener('keyup', renderUserList);
+            if (onAppPage) {
+                if (document.getElementById('admin-ticket-list')) {
+                    initAdminDashboard();
+                } else if (document.getElementById('user-ticket-list')) {
+                    initUserDashboard();
+                } else if (document.getElementById('form-abrir-chamado')) {
+                    initAbrirChamadoForm();
+                } else if (document.getElementById('form-editar-chamado')) { 
+                    initEditarChamadoPage();
+                } else if (document.getElementById('detalhes-titulo')) {
+                    initDetalhesPage();
+                }
+
+                const searchInputAdmin = document.getElementById('campo-busca-admin');
+                if (searchInputAdmin) {
+                    searchInputAdmin.addEventListener('keyup', renderAdminList);
+                }
+                const searchInputUser = document.getElementById('campo-busca-user');
+                if (searchInputUser) {
+                    searchInputUser.addEventListener('keyup', renderUserList);
+                }
             }
         }
     });
