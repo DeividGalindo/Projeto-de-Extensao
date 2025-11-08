@@ -55,6 +55,8 @@ O sistema é dividido em três áreas principais: Autenticação, Painel do Soli
     * Interface responsiva (Mobile-First) com layout Dark Mode.
     * Modais (Popups) e Toasts (Notificações) customizados.
 
+---
+
 ## 🧩 4. Planejamento do Desenvolvimento
 
 ### 📘 Metodologia de Desenvolvimento
