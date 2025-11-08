@@ -10,47 +10,82 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="dashboard-container">
-        <header class="page-header">
-            <h2>ServiceDesk</h2>
-        </header>
 
-        <main class="dashboard-content">
-            <section class="card summary-card">
-                <h3>Resumo de Solicitações</h3>
-                <div class="summary-details">
-                    <p>Aberto: <span>3</span></p> <p>Data: <span id="summary-date"></span></p> 
+    <div class="app-layout">
+        
+        <aside class="app-sidebar">
+            <div class="logo">Service<span>Desk</span></div>
+            <nav class="sidebar-menu">
+                <h3>Tickets</h3>
+                <ul>
+                    <li><a href="dashboard.html" class="active">Meus Chamados</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="app-main-content">
+            
+            <header class="page-header">
+                <h1>Dashboard</h1>
+                <div class="user-menu">
+                    </div>
+            </header>
+
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>Abertos</h3>
+                    <div class="stat-number" id="stat-abertos">0</div>
                 </div>
-                <button class="btn btn-accent">Abrir Novo Chamado</button>
-            </section>
-
-    <div class="search-container">
-                <input type="search" id="campo-busca-user" placeholder="Buscar por ID...">
+                <div class="stat-card">
+                    <h3>Em Andamento</h3>
+                    <div class="stat-number" id="stat-andamento">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Finalizados</h3>
+                    <div class="stat-number" id="stat-finalizados">0</div>
+                </div>
+                <div class="stat-card new-ticket-card">
+                    <button class="btn btn-accent" id="btn-abrir-chamado">Abrir Novo Chamado</button>
+                </div>
             </div>
 
-            <div class="filter-container" id="filter-container-user">
-                <button class="btn btn-filter active" data-status="todos">Todos</button>
-                <button class="btn btn-filter" data-status="Aberto">Abertos</button>
-                <button class="btn btn-filter" data-status="Em Progresso">Em Andamento</button>
-                <button class="btn btn-filter" data-status="Fechado">Finalizados</button>
+            <div class="tickets-table-container">
+                
+                <div class="table-controls">
+                    <div class="filter-container" id="filter-container-user">
+                        <button class="btn btn-filter active" data-status="todos">Todos</button>
+                        <button class="btn btn-filter" data-status="Aberto">Abertos</button>
+                        <button class="btn btn-filter" data-status="Em Progresso">Em Andamento</button>
+                        <button class="btn btn-filter" data-status="Fechado">Finalizados</button>
+                    </div>
+                    <div class="search-container">
+                        <input type="search" id="campo-busca-user" placeholder="Buscar por ID ou título...">
+                    </div>
+                </div>
+
+                <div class="ticket-row header">
+                    <div class="ticket-cell id">Chamado ID</div>
+                    <div class="ticket-cell titulo">Título</div>
+                    <div class="ticket-cell categoria">Categoria</div>
+                    <div class="ticket-cell autor">Autor</div>
+                    <div class="ticket-cell data">Data Abertura</div>
+                    <div class="ticket-cell status">Status</div>
+                    <div class="ticket-cell acoes">Ações</div>
+                </div>
+
+                <div id="user-ticket-list">
+                    <p style="padding: 20px; text-align: center;">Carregando chamados...</p>
+                </div>
             </div>
 
-            <section class="tickets-section" id="user-ticket-list">
-
-    <section class="tickets-section" id="user-ticket-list">
-        <h3>Chamados em Andamento</h3>
-    </section>
-
-            </section>
         </main>
     </div>
-        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-
     <script>
-
       const firebaseConfig = {
         apiKey: "AIzaSyDSyhME4d7gPzbkAOOZJo34vogcspOC6LQ",
         authDomain: "servicedesk-projeto-extensao.firebaseapp.com",
@@ -59,11 +94,8 @@
         messagingSenderId: "758697413283",
         appId: "1:758697413283:web:d709d07b27e293deee0d16"
       };
-
       firebase.initializeApp(firebaseConfig);
     </script>
-
     <script src="js/main.js"></script>
-
 </body>
 </html>

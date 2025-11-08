@@ -4,64 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalhes - ServiceDesk App</title>
-    <link rel ="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="dashboard-container"> 
-        <header class="page-header">
-            <button class="btn-back" id="btn-voltar-dashboard">
-                &larr; 
-            </button>
-            <h2>Detalhes do Chamado</h2>
-        </header>
+    
+    <header class="page-header-full">
+        <button class="btn-back" id="btn-voltar-dashboard">
+            &larr; 
+        </button>
+        <h2>Detalhes do Chamado</h2>
+        <div class="user-menu" style="min-width: 40px;"></div> 
+    </header>
 
-        <main class="dashboard-content">
-            <section class="card details-card">
-                <h3 id="detalhes-titulo">Chamado #...</h3>
-                <p><strong>Status:</strong> <span class="status" id="detalhes-status">...</span></p>
-                <p><strong>Departamento:</strong> <span id="detalhes-departamento">...</span></p>
-                <p><strong>Prioridade:</strong> <span id="detalhes-prioridade">...</span></p>
-                <p><strong>Descrição:</strong> <span id="detalhes-descricao">...</span></p>
+    <div class="details-container">
+        
+        <section class="card details-card">
+            <h3 id="detalhes-titulo">Chamado #...</h3>
+            <p><strong>Status:</strong> <span class="status" id="detalhes-status">...</span></p>
+            <p><strong>Departamento:</strong> <span id="detalhes-departamento">...</span></p>
+            <p><strong>Prioridade:</strong> <span id="detalhes-prioridade">...</span></p>
+            <p><strong>Descrição:</strong> <span id="detalhes-descricao">...</span></p>
+        </section>
+
+        <section class="card" id="admin-ticket-controls" style="display: none;">
             </section>
 
-            <section class="card anexo-card" id="detalhes-anexo-container">
-                <h3>Anexo</h3>
-                <p id="anexo-placeholder">Nenhum anexo encontrado para este chamado (ou foi enviado de outro dispositivo).</p>
-            </section>
+        <section class="card anexo-card" id="detalhes-anexo-container">
+            <h3>Anexo</h3>
+            <p id="anexo-placeholder">Nenhum anexo encontrado para este chamado.</p>
+        </section>
 
-<section class="card history-card">
+        <section class="card history-card">
+            <h3>Histórico de Atualizações</h3>
+            <ul class="history-list" id="detalhes-historico">
+                <li>Carregando histórico...</li>
+            </ul>
+        </section>
 
-            <section class="card history-card">
-                <h3>Histórico de Atualizações</h3>
-                <ul class="history-list" id="detalhes-historico">
-                    <li>Carregando histórico...</li>
-                </ul>
-            </section>
-
-            <section class="card comment-form-card">
+        <section class="card comment-form-card" style="display: none;">
             <h3>Adicionar Comentário</h3>
             <form id="form-add-comment">
                 <div class="input-group">
                     <label for="novo-comentario">Sua mensagem:</label>
-                    <textarea id="novo-comentario" rows="4" required></textarea>
+                    <textarea id="novo-comentario" name="novo-comentario" rows="4" required></textarea>
                 </div>
                 <button type="submit" class="btn btn-accent">Enviar Comentário</button>
             </form>
         </section>
 
-        <button class="btn btn-primary" id="btn-retornar-painel">Retornar ao Painel do Solicitante</button>
-        </main>
+        <button class="btn btn-secondary" id="btn-retornar-painel">Retornar ao Painel</button>
+    
     </div>
-        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-
     <script>
-
       const firebaseConfig = {
         apiKey: "AIzaSyDSyhME4d7gPzbkAOOZJo34vogcspOC6LQ",
         authDomain: "servicedesk-projeto-extensao.firebaseapp.com",
@@ -70,11 +72,8 @@
         messagingSenderId: "758697413283",
         appId: "1:758697413283:web:d709d07b27e293deee0d16"
       };
-
       firebase.initializeApp(firebaseConfig);
     </script>
-
     <script src="js/main.js"></script>
-
 </body>
 </html>

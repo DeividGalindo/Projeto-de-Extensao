@@ -6,50 +6,41 @@
     <title>Editar Chamado - ServiceDesk App</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div class="dashboard-container"> 
+    <div class="form-page-container">
         
-        <header class="page-header">
-            <button class="btn-back" id="btn-voltar-dashboard">
-                &larr; 
-            </button>
-            <h2>Editar Chamado</h2>
-        </header>
-        
-        <main class="dashboard-content content-wrapper-centralizado">
-            <div class="form-box">
-                
-                <form id="form-editar-chamado">
-                    <div class="input-group">
-                        <label for="titulo">Título</label>
-                        <input type="text" id="titulo" name="titulo" required>
-                    </div>
+        <div class="form-box">
+            <h1>Editar Chamado</h1>
+            
+            <form id="form-editar-chamado">
+                <div class="input-group">
+                    <label for="titulo">Título</label>
+                    <input type="text" id="titulo" name="titulo" required>
+                </div>
 
-                    <div class="input-group">
-                        <label for="descricao">Descrição</label>
-                        <textarea id="descricao" name="descricao" rows="4" required></textarea>
-                    </div>
+                <div class="input-group">
+                    <label for="descricao">Descrição</label>
+                    <textarea id="descricao" name="descricao" rows="4" required></textarea>
+                </div>
 
-                    <div class="input-group">
-                        <label for="categoria">Categoria</label>
-                        <select id="categoria" name="categoria">
-                            <option value="hardware">Hardware</option>
-                            <option value="software">Software</option>
-                            <option value="rede">Rede</option>
-                            <option value="outros">Outros</option>
-                        </select>
-                    </div>
+                <div class="input-group">
+                    <label for="categoria">Categoria</label>
+                    <select id="categoria" name="categoria">
+                        <option value="hardware">Hardware</option>
+                        <option value="software">Software</option>
+                        <option value="rede">Rede</option>
+                        <option value="outros">Outros</option>
+                    </select>
+                </div>
 
-                    <button type="submit" class="btn btn-accent">Salvar Alterações</button>
-                    <button type="button" class="btn btn-primary" id="btn-voltar-painel">Cancelar</button>
-                </form>
-            </div>
-        </main> 
-
+                <button type="submit" class="btn btn-accent">Salvar Alterações</button>
+                <button type="button" class="btn btn-secondary" id="btn-voltar-painel">Cancelar</button>
+            </form>
+        </div>
     </div> 
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>

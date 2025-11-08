@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let filtroStatusUsuario = 'todos';
     let filtroStatusAdmin = 'todos';
 
+    // Variável para guardar o ID do ticket a ser alocado
+    let ticketIdParaAlocar = null;
+
     function getTimestampAtual() {
         return firebase.firestore.FieldValue.serverTimestamp();
     }
@@ -27,27 +30,100 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             return "Data inválida";
         }
-        return data.toLocaleString('pt-BR');
+        // Formato DD/MM/AAAA HH:MM
+        return data.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
+
+    // --- NOVA FUNÇÃO PARA ATUALIZAR O RELÓGIO ---
+    function iniciarRelogio() {
+        const elementoData = document.getElementById('admin-data-atual');
+        if (!elementoData) return;
+
+        function atualizar() {
+            const agora = new Date();
+            const dataFormatada = agora.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            const horaFormatada = agora.toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Atualiza o HTML
+            elementoData.innerHTML = `
+                ${dataFormatada}
+                <span style="display: block; font-size: 0.8em; opacity: 0.7;">${horaFormatada}</span>
+            `;
+        }
+
+        atualizar(); // Chama imediatamente
+        setInterval(atualizar, 60000); // Atualiza a cada minuto
+    }
+
 
     function injectNotificationContainers() {
         const toastContainer = document.createElement('div');
         toastContainer.id = 'toast-container';
         document.body.appendChild(toastContainer);
 
-        const modalHTML = `
+        // Modal de Confirmação (Excluir)
+        const modalConfirmHTML = `
             <div id="modal-overlay">
                 <div class="modal-box">
                     <h3 id="modal-title">Confirmação</h3>
                     <p id="modal-message">Você tem certeza?</p>
                     <div class="modal-actions">
-                        <button class="btn btn-primary" id="modal-btn-cancel">Cancelar</button>
+                        <button class="btn btn-secondary" id="modal-btn-cancel">Cancelar</button>
                         <button class="btn btn-danger" id="modal-btn-confirm">Confirmar</button>
                     </div>
                 </div>
             </div>
         `;
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        document.body.insertAdjacentHTML('beforeend', modalConfirmHTML);
+
+        // --- NOVO MODAL DE ALOCAÇÃO ---
+        const modalAlocarHTML = `
+            <div id="alocar-modal-overlay">
+                <div class="modal-box">
+                    <h3 id="alocar-modal-title">Alocar Chamado</h3>
+                    <form id="form-alocar-chamado">
+                        
+                        <div class="input-group">
+                            <label for="alocar-categoria">Categoria</label>
+                            <select id="alocar-categoria">
+                                <option value="hardware">Hardware</option>
+                                <option value="software">Software</option>
+                                <option value="rede">Rede</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="alocar-status">Status</label>
+                            <select id="alocar-status">
+                                <option value="Aberto">Aberto</option>
+                                <option value="Em Progresso">Em Progresso</option>
+                                <option value="Fechado">Fechado</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="alocar-departamento">Atribuir para (Departamento)</label>
+                            <select id="alocar-departamento">
+                                </select>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn-secondary" id="alocar-btn-cancel">Cancelar</button>
+                            <button type="submit" class="btn btn-accent">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalAlocarHTML);
     }
 
     function showToast(message, type = 'info') {
@@ -100,8 +176,58 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- NOVA FUNÇÃO PARA ABRIR O MODAL DE ALOCAÇÃO ---
+    async function showAlocarModal(ticketId) {
+        const overlay = document.getElementById('alocar-modal-overlay');
+        if (!overlay) return;
+
+        // 1. Buscar dados atuais do chamado
+        try {
+            const docRef = db.collection("chamados").doc(ticketId);
+            const doc = await docRef.get();
+            if (!doc.exists) {
+                showToast("Erro: Chamado não encontrado.", "error");
+                return;
+            }
+            const chamado = doc.data();
+
+            // 2. Armazenar o ID para o submit
+            ticketIdParaAlocar = ticketId;
+            
+            // 3. Preencher os dropdowns com os dados atuais
+            document.getElementById('alocar-modal-title').textContent = `Alocar Chamado #${chamado.numeroChamado || ticketId.substring(0,6)}`;
+            document.getElementById('alocar-categoria').value = chamado.categoria || 'outros';
+            document.getElementById('alocar-status').value = chamado.status || 'Aberto';
+
+            // Preencher dropdown de departamentos
+            const deptoSelect = document.getElementById('alocar-departamento');
+            deptoSelect.innerHTML = '<option value="null">Nenhum</option>'; // Opção padrão
+            window.appData.departamentos.forEach(depto => {
+                const isSelected = chamado.departamento === depto ? 'selected' : '';
+                deptoSelect.innerHTML += `<option value="${depto}" ${isSelected}>${depto}</option>`;
+            });
+
+            // 4. Exibir o modal
+            overlay.classList.add('show');
+
+        } catch (err) {
+            console.error("Erro ao buscar dados para alocação: ", err);
+            showToast("Erro ao carregar dados do chamado.", "error");
+        }
+    }
+
+    // --- NOVA FUNÇÃO PARA FECHAR O MODAL DE ALOCAÇÃO ---
+    function closeAlocarModal() {
+        const overlay = document.getElementById('alocar-modal-overlay');
+        if (overlay) {
+            overlay.classList.remove('show');
+        }
+        ticketIdParaAlocar = null; // Limpa o ID
+    }
+
+
     function injetaNavbar() {
-        const header = document.querySelector('.page-header');
+        const header = document.querySelector('.user-menu');
         if (!header) {
             return;
         }
@@ -114,26 +240,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const navbarHTML = `
-            <div class="navbar-container">
-                <div class="user-menu">
-                    <img src="img/icone_usuario.png" alt="Ícone do Usuário" class="user-icon">
-                    <div class="dropdown-menu">
-                        <span class="user-name">${nomeUsuario}</span>
-                        <a href="#" class="logout-link">Logout</a>
-                    </div>
-                </div>
+            <img src="img/icone_usuario.png" alt="Ícone do Usuário" class="user-icon">
+            <div class="dropdown-menu">
+                <span class="user-name">${nomeUsuario}</span>
+                <a href="#" class="logout-link">Logout</a>
             </div>
         `;
-        header.insertAdjacentHTML('beforeend', navbarHTML);
-    }
-
-    function injetaControlesAdmin(user) {
-        if (user && user.email === 'adm@admin.com') {
-            const container = document.getElementById('admin-actions-placeholder');
-            if (container) {
-                container.innerHTML = `<a href="gerenciar-usuarios.html" class="btn btn-primary">Gerenciar Usuários</a>`;
-            }
-        }
+        header.innerHTML = navbarHTML;
     }
 
     document.addEventListener('click', function(event) {
@@ -156,8 +269,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initLoginPage() {
         const loginForm = document.querySelector('.login-box form');
-        const btnRecuperar = document.getElementById('btn-recuperar-senha');
-        
         if (loginForm) {
             loginForm.addEventListener('submit', function(event) {
                 event.preventDefault();
@@ -168,7 +279,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then((userCredential) => {
                         const user = userCredential.user;
                         localStorage.setItem('usuarioLogado', user.displayName || user.email); 
-                        
                     })
                     .catch((error) => {
                         console.error("Erro de login:", error.code);
@@ -176,32 +286,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             showToast("Email ou senha incorretos.", "error");
                         } else {
                             showToast("Erro ao fazer login. Tente novamente.", "error");
-                        }
-                    });
-            });
-        }
-        
-        if (btnRecuperar) {
-            btnRecuperar.addEventListener('click', function(event) {
-                event.preventDefault();
-                const emailInput = document.getElementById('email');
-                const email = emailInput.value;
-
-                if (email === "") {
-                    showToast("Por favor, digite seu email no campo 'Email'.", "error");
-                    return;
-                }
-
-                auth.sendPasswordResetEmail(email)
-                    .then(() => {
-                        showToast("Email de redefinição enviado! Verifique sua caixa de entrada.", "success");
-                    })
-                    .catch((error) => {
-                        console.error("Erro ao enviar email de redefinição:", error.code);
-                        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-value') {
-                            showToast("Nenhuma conta encontrada com este email.", "error");
-                        } else {
-                            showToast("Erro ao enviar email. Tente novamente.", "error");
                         }
                     });
             });
@@ -244,10 +328,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('campo-busca-admin');
         if (!adminTicketList) return;
 
-        const departamentos = window.appData.departamentos;
-        const statusList = ["Aberto", "Em Progresso", "Fechado"];
-        const prioridadeList = ["Baixa", "Média", "Alta", "Não definida"];
+        const chamadosAbertos = chamadosDoAdminCache.filter(c => c.status === 'Aberto').length;
+        const chamadosAndamento = chamadosDoAdminCache.filter(c => c.status === 'Em Progresso').length;
+        const chamadosFechados = chamadosDoAdminCache.filter(c => c.status === 'Fechado').length;
         
+        const statAbertos = document.getElementById('stat-abertos-admin');
+        const statAndamento = document.getElementById('stat-andamento-admin');
+        const statFinalizados = document.getElementById('stat-finalizados-admin');
+
+        if(statAbertos) statAbertos.textContent = chamadosAbertos;
+        if(statAndamento) statAndamento.textContent = chamadosAndamento;
+        if(statFinalizados) statFinalizados.textContent = chamadosFechados;
+
         const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
 
         const chamadosFiltradosPorStatus = chamadosDoAdminCache.filter(chamado => {
@@ -264,67 +356,33 @@ document.addEventListener('DOMContentLoaded', function() {
         adminTicketList.innerHTML = ''; 
 
         if (chamadosFiltrados.length === 0) {
-            adminTicketList.innerHTML = '<p>Nenhum chamado encontrado.</p>';
+            adminTicketList.innerHTML = '<p style="padding: 20px; text-align: center;">Nenhum chamado encontrado.</p>';
         }
 
         chamadosFiltrados.forEach(chamado => {
-            const ticketCard = document.createElement('div');
-            ticketCard.className = 'ticket-card card';
-            ticketCard.dataset.id = chamado.id;
-
-            let deptoOptionsHTML = '<option value="null">Nenhum</option>';
-            departamentos.forEach(depto => {
-                const isSelected = chamado.departamento === depto ? 'selected' : '';
-                deptoOptionsHTML += `<option value="${depto}" ${isSelected}>${depto}</option>`;
-            });
-
-            let statusOptionsHTML = '';
-            statusList.forEach(status => {
-                const isSelected = chamado.status === status ? 'selected' : '';
-                statusOptionsHTML += `<option value="${status}" ${isSelected}>${status}</option>`;
-            });
-
-            let prioridadeOptionsHTML = '';
-            prioridadeList.forEach(prioridade => {
-                const isSelected = chamado.prioridade === prioridade ? 'selected' : '';
-                prioridadeOptionsHTML += `<option value="${prioridade}" ${isSelected}>${prioridade}</option>`;
-            });
-
-            ticketCard.innerHTML = `
-                <div class="ticket-info">
-                    <h4>Chamado #${chamado.numeroChamado || chamado.id.substring(0,6)} - ${chamado.titulo}</h4>
-                    <p>Status: <span class="status ${chamado.status.toLowerCase().replace(' ', '-')}">${chamado.status}</span></p>
+            const ticketRow = document.createElement('div');
+            ticketRow.className = 'ticket-row';
+            ticketRow.dataset.id = chamado.id;
+            
+            const dataFormatada = formatarTimestamp(chamado.dataAbertura);
+            
+            ticketRow.innerHTML = `
+                <div class="ticket-cell id">#${chamado.numeroChamado || chamado.id.substring(0,6)}</div>
+                <div class="ticket-cell titulo">${chamado.titulo}</div>
+                <div class="ticket-cell categoria">${chamado.categoria || 'N/A'}</div>
+                <div class="ticket-cell autor">${chamado.autorNome || 'N/A'}</div>
+                <div class="ticket-cell data">${dataFormatada}</div>
+                <div class="ticket-cell status">
+                    <span class="status ${chamado.status.toLowerCase().replace(' ', '-')}">${chamado.status}</span>
                 </div>
-                <div class="ticket-actions ticket-actions-admin">
+                <div class="ticket-cell acoes">
+                    <button class="btn btn-accent btn-alocar-chamado" data-id="${chamado.id}">Alocar</button>
                     <button class="btn btn-primary btn-ver-detalhes" data-id="${chamado.id}">Detalhes</button>
-                    <button class="btn btn-accent btn-editar-chamado" data-id="${chamado.id}">Editar</button>
                     <button class="btn btn-danger btn-excluir-chamado" data-id="${chamado.id}">Excluir</button>
                 </div>
-                <div class="assignment-controls">
-                    <div>
-                        <label for="depto-${chamado.id}">Designar para:</label>
-                        <select id="depto-${chamado.id}" class="departamento-select admin-select" data-id="${chamado.id}">
-                            ${deptoOptionsHTML}
-                        </select>
-                    </div>
-                    <div>
-                        <label for="status-${chamado.id}">Mudar Status:</label>
-                        <select id="status-${chamado.id}" class="status-select admin-select" data-id="${chamado.id}">
-                            ${statusOptionsHTML}
-                        </select>
-                    </div>
-                    <div>
-                        <label for="prioridade-${chamado.id}">Mudar Prioridade:</label>
-                        <select id="prioridade-${chamado.id}" class="prioridade-select admin-select" data-id="${chamado.id}">
-                            ${prioridadeOptionsHTML}
-                        </select>
-                    </div>
-                </div>
             `;
-            adminTicketList.appendChild(ticketCard);
+            adminTicketList.appendChild(ticketRow);
         });
-
-        attachAdminListeners();
     }
         
     function salvarAlteracao(ticketId, campo, valor, nomeCampo) {
@@ -351,30 +409,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function attachAdminListeners() {
-        document.querySelectorAll('.departamento-select').forEach(select => {
-            select.addEventListener('change', function(event) {
-                const ticketId = event.target.dataset.id;
-                const valor = event.target.value;
-                salvarAlteracao(ticketId, 'departamento', valor, 'Departamento');
-            });
-        });
-        document.querySelectorAll('.status-select').forEach(select => {
-            select.addEventListener('change', function(event) {
-                const ticketId = event.target.dataset.id;
-                const valor = event.target.value;
-                salvarAlteracao(ticketId, 'status', valor, 'Status');
-            });
-        });
-        document.querySelectorAll('.prioridade-select').forEach(select => {
-            select.addEventListener('change', function(event) {
-                const ticketId = event.target.dataset.id;
-                const valor = event.target.value;
-                salvarAlteracao(ticketId, 'prioridade', valor, 'Prioridade');
-            });
-        });
-    }
-    
     function initAdminDashboard() {
         const searchInput = document.getElementById('campo-busca-admin');
         const filterContainer = document.getElementById('filter-container-admin');
@@ -407,11 +441,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderUserList() {
         const userTicketList = document.getElementById('user-ticket-list');
-        const summaryCount = document.querySelector('.summary-details span');
-        const summaryDate = document.getElementById('summary-date');
         const searchInput = document.getElementById('campo-busca-user');
         
         if (!userTicketList) return;
+
+        const chamadosAbertos = chamadosDoUsuarioCache.filter(c => c.status === 'Aberto').length;
+        const chamadosAndamento = chamadosDoUsuarioCache.filter(c => c.status === 'Em Progresso').length;
+        const chamadosFechados = chamadosDoUsuarioCache.filter(c => c.status === 'Fechado').length;
+
+        const statAbertos = document.getElementById('stat-abertos');
+        const statAndamento = document.getElementById('stat-andamento');
+        const statFinalizados = document.getElementById('stat-finalizados');
+
+        if(statAbertos) statAbertos.textContent = chamadosAbertos;
+        if(statAndamento) statAndamento.textContent = chamadosAndamento;
+        if(statFinalizados) statFinalizados.textContent = chamadosFechados;
 
         const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
         
@@ -426,36 +470,34 @@ document.addEventListener('DOMContentLoaded', function() {
             return titulo.includes(searchTerm) || id.includes(searchTerm);
         });
 
-        const chamadosAbertos = chamadosDoUsuarioCache.filter(c => c.status === 'Aberto').length;
-        if(summaryCount) {
-             summaryCount.textContent = chamadosAbertos;
-        }
-        
-        if(summaryDate) {
-            summaryDate.textContent = new Date().toLocaleDateString('pt-BR');
-        }
-
-        userTicketList.innerHTML = '<h3>Chamados em Andamento</h3>'; 
+        userTicketList.innerHTML = ''; 
 
         if (chamadosFiltrados.length === 0) {
-            userTicketList.innerHTML += '<p>Nenhum chamado encontrado.</p>';
+            userTicketList.innerHTML = '<p style="padding: 20px; text-align: center;">Nenhum chamado encontrado.</p>';
+            return;
         }
 
         chamadosFiltrados.forEach(chamado => {
-            const ticketCard = document.createElement('div');
-            ticketCard.className = 'ticket-card card';
-            ticketCard.innerHTML = `
-                <div class="ticket-info">
-                    <h4>Chamado #${chamado.numeroChamado || chamado.id.substring(0,6)} - ${chamado.titulo}</h4>
-                    <p>Status: <span class="status ${chamado.status.toLowerCase().replace(' ', '-')}">${chamado.status}</span></p>
+            const ticketRow = document.createElement('div');
+            ticketRow.className = 'ticket-row';
+            
+            const dataFormatada = formatarTimestamp(chamado.dataAbertura);
+            
+            ticketRow.innerHTML = `
+                <div class="ticket-cell id">#${chamado.numeroChamado || chamado.id.substring(0,6)}</div>
+                <div class="ticket-cell titulo">${chamado.titulo}</div>
+                <div class="ticket-cell categoria">${chamado.categoria || 'N/A'}</div>
+                <div class="ticket-cell autor">${chamado.autorNome || 'N/A'}</div>
+                <div class="ticket-cell data">${dataFormatada}</div>
+                <div class="ticket-cell status">
+                    <span class="status ${chamado.status.toLowerCase().replace(' ', '-')}">${chamado.status}</span>
                 </div>
-                <div class="ticket-actions">
+                <div class="ticket-cell acoes">
                     <button class="btn btn-primary btn-ver-detalhes" data-id="${chamado.id}">Detalhes</button>
-                    <button class="btn btn-accent btn-editar-chamado" data-id="${chamado.id}">Editar</button>
-                    <button class="btn btn-danger btn-excluir-chamado" data-id="${chamado.id}">Excluir</button>
+                    <button class="btn btn-secondary btn-editar-chamado" data-id="${chamado.id}">Editar</button>
                 </div>
             `;
-            userTicketList.appendChild(ticketCard);
+            userTicketList.appendChild(ticketRow);
         });
     }
 
@@ -656,7 +698,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(() => {
                         alert("Chamado atualizado com sucesso!");
-                        window.location.href = 'dashboard.html';
+                        if (user.email === 'adm@admin.com') {
+                            window.location.href = 'dashboard-admin.html';
+                        } else {
+                            window.location.href = 'dashboard.html';
+                        }
                     })
                     .catch((error) => {
                         console.error("Erro ao atualizar: ", error);
@@ -740,6 +786,77 @@ document.addEventListener('DOMContentLoaded', function() {
                     anexoContainer.classList.remove('com-anexo');
                 }
             }
+
+            const commentFormCard = document.querySelector('.comment-form-card');
+            const adminControls = document.getElementById('admin-ticket-controls');
+            
+            if (auth.currentUser.email === 'adm@admin.com') {
+                if (commentFormCard) commentFormCard.style.display = 'block';
+                if (adminControls) adminControls.style.display = 'block';
+                
+                if (adminControls && !adminControls.hasChildNodes()) {
+                    const departamentos = window.appData.departamentos;
+                    const statusList = ["Aberto", "Em Progresso", "Fechado"];
+                    const prioridadeList = ["Baixa", "Média", "Alta", "Não definida"];
+                    const categoriaList = ["hardware", "software", "rede", "outros"]; 
+
+                    let categoriaOptionsHTML = '';
+                    categoriaList.forEach(cat => {
+                        const isSelected = chamado.categoria === cat ? 'selected' : '';
+                        categoriaOptionsHTML += `<option value="${cat}">${cat}</option>`;
+                    });
+
+                    let deptoOptionsHTML = '<option value="null">Nenhum</option>';
+                    departamentos.forEach(depto => {
+                        const isSelected = chamado.departamento === depto ? 'selected' : '';
+                        deptoOptionsHTML += `<option value="${depto}" ${isSelected}>${depto}</option>`;
+                    });
+
+                    let statusOptionsHTML = '';
+                    statusList.forEach(status => {
+                        const isSelected = chamado.status === status ? 'selected' : '';
+                        statusOptionsHTML += `<option value="${status}" ${isSelected}>${status}</option>`;
+                    });
+
+                    let prioridadeOptionsHTML = '';
+                    prioridadeList.forEach(prioridade => {
+                        const isSelected = chamado.prioridade === prioridade ? 'selected' : '';
+                        prioridadeOptionsHTML += `<option value="${prioridade}" ${isSelected}>${prioridade}</option>`;
+                    });
+
+                    adminControls.innerHTML = `
+                        <h3>Controles do Administrador</h3>
+                        <div class="assignment-controls">
+                            <div>
+                                <label for="categoria-admin">Mudar Categoria:</label>
+                                <select id="categoria-admin" class="admin-select">${categoriaOptionsHTML}</select>
+                            </div>
+                            <div>
+                                <label for="depto-admin">Designar para:</label>
+                                <select id="depto-admin" class="admin-select">${deptoOptionsHTML}</select>
+                            </div>
+                            <div>
+                                <label for="status-admin">Mudar Status:</label>
+                                <select id="status-admin" class="admin-select">${statusOptionsHTML}</select>
+                            </div>
+                            <div>
+                                <label for="prioridade-admin">Mudar Prioridade:</label>
+                                <select id="prioridade-admin" class="admin-select">${prioridadeOptionsHTML}</select>
+                            </div>
+                        </div>
+                    `;
+
+                    document.getElementById('categoria-admin').addEventListener('change', (e) => salvarAlteracao(ticketId, 'categoria', e.target.value, 'Categoria'));
+                    document.getElementById('depto-admin').addEventListener('change', (e) => salvarAlteracao(ticketId, 'departamento', e.target.value, 'Departamento'));
+                    document.getElementById('status-admin').addEventListener('change', (e) => salvarAlteracao(ticketId, 'status', e.target.value, 'Status'));
+                    document.getElementById('prioridade-admin').addEventListener('change', (e) => salvarAlteracao(ticketId, 'prioridade', e.target.value, 'Prioridade'));
+                }
+
+            } else {
+                if (commentFormCard) commentFormCard.style.display = 'block';
+                if (adminControls) adminControls.style.display = 'none';
+            }
+
         }, (error) => {
             console.error("Erro ao buscar detalhes: ", error);
             showToast("Erro ao carregar detalhes.", "error");
@@ -789,6 +906,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const nomeCompleto = document.getElementById('nomeCompleto').value;
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
+                const username = document.getElementById('username').value;
                 const politica = document.getElementById('politica').checked;
 
                 if (!politica) {
@@ -802,22 +920,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         return user.updateProfile({
                             displayName: nomeCompleto
-                        });
-                    })
-                    .then((userCredential) => {
-                        const user = auth.currentUser;
-                        db.collection("users").doc(user.uid).set({
-                            nomeCompleto: nomeCompleto,
-                            email: email,
-                            role: "user" 
-                        })
-                        .then(() => {
-                            alert("Conta criada com sucesso! Você será redirecionado para a página de login.");
-                            window.location.href = 'index.html';
-                        })
-                        .catch((error) => {
-                             console.error("Erro ao salvar usuário no Firestore: ", error);
-                             showToast("Erro ao criar conta (db).", "error");
+                        }).then(() => {
+                            db.collection("users").doc(user.uid).set({
+                                uid: user.uid,
+                                nomeCompleto: nomeCompleto,
+                                email: email,
+                                username: username,
+                                role: "solicitante" 
+                            }).then(() => {
+                                alert("Conta criada com sucesso! Você será redirecionado para a página de login.");
+                                window.location.href = 'index.html';
+                            });
                         });
                     })
                     .catch((error) => {
@@ -833,75 +946,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
-    
-    function initGerenciarUsuarios() {
-        const userListContainer = document.getElementById('user-list-container');
-        if (!userListContainer) return;
-
-        db.collection("users").get()
-            .then((querySnapshot) => {
-                userListContainer.innerHTML = '';
-                if (querySnapshot.empty) {
-                    userListContainer.innerHTML = '<p>Nenhum usuário encontrado (exceto você).</p>';
-                    return;
-                }
-
-                const currentUser = auth.currentUser;
-
-                querySnapshot.forEach(doc => {
-                    const user = doc.data();
-                    const userId = doc.id;
-                    
-                    if (userId === currentUser.uid) return;
-
-                    const userCard = document.createElement('div');
-                    userCard.className = 'user-management-card';
-                    userCard.dataset.id = userId;
-
-                    const userInfo = document.createElement('div');
-                    userInfo.className = 'user-management-info';
-                    userInfo.innerHTML = `
-                        <h4>${user.nomeCompleto}</h4>
-                        <p>${user.email}</p>
-                    `;
-
-                    const roleSelector = document.createElement('select');
-                    roleSelector.className = 'user-role-select';
-                    roleSelector.dataset.id = userId;
-
-                    const roles = ["user", "admin", "admin_hardware", "admin_software", "admin_rede", "admin_outro"];
-                    roles.forEach(role => {
-                        const isSelected = user.role === role ? 'selected' : '';
-                        roleSelector.innerHTML += `<option value="${role}" ${isSelected}>${role}</option>`;
-                    });
-                    
-                    roleSelector.addEventListener('change', function(event) {
-                        const newRole = event.target.value;
-                        const targetUserId = event.target.dataset.id;
-                        
-                        db.collection("users").doc(targetUserId).update({
-                            role: newRole
-                        })
-                        .then(() => {
-                            showToast(`Função de ${user.nomeCompleto} atualizada para ${newRole}.`, "success");
-                        })
-                        .catch(err => {
-                            console.error("Erro ao atualizar função: ", err);
-                            showToast("Erro ao atualizar função.", "error");
-                        });
-                    });
-
-                    userCard.appendChild(userInfo);
-                    userCard.appendChild(roleSelector);
-                    userListContainer.appendChild(userCard);
-                });
-            })
-            .catch(err => {
-                console.error("Erro ao buscar usuários: ", err);
-                showToast("Erro ao carregar lista de usuários.", "error");
-            });
-    }
-
 
     function bindGlobalNavigators() {
         document.body.addEventListener('click', function(event) {
@@ -933,7 +977,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
-            if (target.matches('.summary-card .btn-accent')) {
+            if (target.matches('#btn-abrir-chamado')) {
                 window.location.href = 'abrir-chamado.html';
             }
             
@@ -945,6 +989,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target.classList.contains('btn-editar-chamado')) {
                  const ticketId = target.dataset.id;
                  window.location.href = `editar-chamado.html?id=${ticketId}`;
+            }
+
+            // --- NOVO EVENTO: CLICAR EM "ALOCAR" ---
+            if (target.classList.contains('btn-alocar-chamado')) {
+                const ticketId = target.dataset.id;
+                showAlocarModal(ticketId);
             }
 
             if (target.classList.contains('btn-excluir-chamado')) {
@@ -964,9 +1014,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
 
-            if (target.matches('#form-abrir-chamado .btn-secondary')) {
-            }
-
             const id = target.id;
             if (id === 'btn-voltar-painel' || id === 'btn-ir-painel' || id === 'btn-retornar-painel' || id === 'btn-voltar-dashboard') {
                 if (document.referrer.includes('dashboard-admin.html')) {
@@ -975,7 +1022,33 @@ document.addEventListener('DOMContentLoaded', function() {
                      window.location.href = 'dashboard.html';
                 }
             }
+
+            // Eventos do Modal de Alocação
+            if (id === 'alocar-btn-cancel') {
+                closeAlocarModal();
+            }
         });
+
+        // Event listener para o SUBMIT do formulário de alocação
+        const formAlocar = document.getElementById('form-alocar-chamado');
+        if (formAlocar) {
+            formAlocar.addEventListener('submit', function(event) {
+                event.preventDefault();
+                if (!ticketIdParaAlocar) return;
+
+                const novaCategoria = document.getElementById('alocar-categoria').value;
+                const novoStatus = document.getElementById('alocar-status').value;
+                const novoDepto = document.getElementById('alocar-departamento').value;
+
+                // Salva as alterações
+                salvarAlteracao(ticketIdParaAlocar, 'categoria', novaCategoria, 'Categoria');
+                salvarAlteracao(ticketIdParaAlocar, 'status', novoStatus, 'Status');
+                salvarAlteracao(ticketIdParaAlocar, 'departamento', novoDepto, 'Departamento');
+
+                closeAlocarModal();
+                showToast("Chamado alocado com sucesso!", "success");
+            });
+        }
     }
 
     
@@ -987,6 +1060,7 @@ document.addEventListener('DOMContentLoaded', function() {
         bindGlobalNavigators(); 
 
         setupDatabase();
+        iniciarRelogio(); // <-- Chamada do Relógio
         
         const path = window.location.pathname; 
 
@@ -995,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.removeItem('usuarioRole');
             localStorage.removeItem('usuarioUid');
             
-            if (!path.endsWith('index.html') && !path.endsWith('registrar.html') && !path.endsWith('esqueci-senha.html')) {
+            if (!path.endsWith('index.html') && !path.endsWith('registrar.html') && !path.endsWith('esqueci-senha.html') && !path.endsWith('aguarde-aprovacao.html')) {
                 console.log("Usuário não logado, redirecionando para o login.");
                 window.location.href = 'index.html';
             } else if (path.endsWith('index.html') || path === '/') {
@@ -1010,10 +1084,9 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('usuarioLogado', user.displayName || user.email);
             localStorage.setItem('usuarioUid', user.uid);
             
-            injetaControlesAdmin(user);
-            
-            if (path.endsWith('index.html') || path.endsWith('registrar.html') || path.endsWith('esqueci-senha.html') || path === '/') {
-                console.log("Usuário já logado, redirecionando para o dashboard.");
+            const onLoginPage = path.endsWith('index.html') || path.endsWith('registrar.html') || path.endsWith('esqueci-senha.html') || path === '/';
+
+            if (onLoginPage) {
                 if (user.email === 'adm@admin.com') {
                     window.location.href = 'dashboard-admin.html';
                 } else {
@@ -1032,8 +1105,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 initEditarChamadoPage();
             } else if (path.endsWith('detalhes-chamado.html')) {
                 initDetalhesPage();
-            } else if (path.endsWith('gerenciar-usuarios.html')) {
-                initGerenciarUsuarios();
             }
             
             const searchInputAdmin = document.getElementById('campo-busca-admin');
