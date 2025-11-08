@@ -1,5 +1,3 @@
-# 🚀 ServiceDesk - Projeto de Extensão
-
 # 🚀 ServiceDesk App - Documentação do Projeto
 
 ## 1. Introdução e Visão Geral
