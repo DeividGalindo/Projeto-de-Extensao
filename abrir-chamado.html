@@ -26,8 +26,11 @@
         <main class="app-main-content">
             
             <header class="page-header">
-                
-                <div style="width: 40px; flex-shrink: 0;"></div>
+                <button class="btn-menu-mobile" id="btn-menu-mobile">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
 
                 <h1 style="flex-grow: 1; text-align: center;">Abrir Novo Chamado</h1>
 
@@ -35,7 +38,8 @@
                     </div>
             </header>
 
-            <div class="form-container"> <div class="card">
+            <div class="form-container">
+                <div class="card">
                     <form id="form-abrir-chamado">
                         <div class="input-group">
                             <label for="titulo">Título</label>
@@ -64,11 +68,13 @@
                             <span id="file-name-display" class="file-name" style="text-align: left; display: inline; margin-left: 15px; opacity: 0.7;">Nenhum arquivo selecionado</span>
                         </div>
 
-                        <button type="submit" class="btn btn-accent" style="max-width: 250px; margin-left: 4rem;">Enviar Chamado</button>
-                        <button type="button" class="btn btn-secondary" id="btn-voltar-painel" style="max-width: 250px; margin-left: 4rem;">Cancelar</button>
+                        <button type="submit" class="btn btn-accent" style="max-width: 250px;">Enviar Chamado</button>
+                        <button type="button" class="btn btn-secondary" id="btn-voltar-painel" style="max-width: 250px; margin-left: 10px;">Cancelar</button>
                     </form>
                 </div>
-            </div> </main>
+            </div>
+
+        </main>
     </div>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>

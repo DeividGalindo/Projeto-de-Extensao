@@ -206,6 +206,7 @@ body {
     box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
     border-right: 1px solid var(--input-color);
     z-index: 10; 
+    transition: transform 0.3s ease; /* Adicionado para animação mobile */
 }
 
 .app-sidebar .logo {
@@ -268,7 +269,7 @@ body {
     border-bottom: 1px solid var(--input-color);
     padding-bottom: 1.5rem;
     margin-bottom: 2rem;
-    padding: 1rem;
+    padding: 1rem; /* Sua alteração */
 }
 
 .page-header h1 {
@@ -373,6 +374,7 @@ body {
     padding: 1.5rem;
     border-radius: var(--border-radius);
     border: 1px solid var(--input-color);
+    overflow-x: auto; /* <-- ADICIONADO PARA ROLAGEM HORIZONTAL */
 }
 
 .tickets-table-header {
@@ -391,6 +393,7 @@ body {
     display: flex;
     justify-content: space-between;
     margin-bottom: 1rem;
+    min-width: 900px; /* <-- CORRIGIDO: Garante que os controles rolem com a tabela */
 }
 
 .filter-container {
@@ -445,11 +448,12 @@ body {
     font-weight: 600;
     opacity: 0.7;
     font-size: 0.9em;
+    min-width: 900px; /* <-- CORRIGIDO: Garante que o cabeçalho role */
 }
 
 .ticket-row.header .status,
 .ticket-row.header .acoes {
-    text-align: center; /* Centraliza cabeçalho 'Status' e 'Ações' */
+    text-align: center; 
 }
 
 
@@ -461,6 +465,7 @@ body {
     border-radius: var(--border-radius);
     margin-bottom: 10px;
     transition: background-color 0.3s ease;
+    min-width: 900px; /* <-- CORRIGIDO: Garante que a linha role */
 }
 .ticket-row:hover {
     background-color: var(--input-color);
@@ -479,27 +484,27 @@ body {
 
 /* --- LARGURAS DE COLUNA CORRIGIDAS --- */
 .ticket-cell.id {
-    width: 14%;
+    width: 8%;
     flex-shrink: 0;
 }
 .ticket-cell.titulo {
-    width: 14%;
+    width: 24%;
     font-weight: 600;
     flex-shrink: 0;
 }
 .ticket-cell.categoria {
-    width: 14%;
+    width: 12%;
     opacity: 0.8;
     text-transform: capitalize;
     flex-shrink: 0;
 }
 .ticket-cell.autor {
-    width: 14%;
+    width: 16%;
     opacity: 0.8;
     flex-shrink: 0;
 }
 .ticket-cell.data {
-    width: 14%;
+    width: 15%;
     opacity: 0.8;
     flex-shrink: 0;
 }
@@ -509,9 +514,9 @@ body {
     flex-shrink: 0;
 }
 .ticket-cell.acoes {
-    width: 22%; /* Aumentado para caber 4 botões se necessário */
+    width: 17%;
     display: flex;
-    justify-content: center; /* Alinha botões à direita */
+    justify-content: flex-end; 
     gap: 8px;
     overflow: visible; 
     flex-shrink: 0;
@@ -522,7 +527,7 @@ body {
 /* Botões pequenos dentro da tabela */
 .ticket-cell.acoes .btn {
     width: auto;
-    padding: 8px 12px; /* Diminuído para caber melhor */
+    padding: 8px 12px;
     font-size: 0.85em;
     margin-top: 0;
 }
@@ -570,10 +575,10 @@ body {
     padding: 20px 40px; 
 }
 
-/* --- NOVO: Contêiner para formulários dentro do app-layout --- */
+/* --- Contêiner para formulários dentro do app-layout --- */
 .form-container {
-    max-width: 60%; /* 100% - 40% = 60% */
-    margin: 0 auto;  /* Centraliza o contêiner */
+    max-width: 60%; 
+    margin: 0 auto;
 }
 
 .form-container .card {
@@ -628,6 +633,24 @@ body {
     font-family: 'Poppins', sans-serif;
     text-transform: capitalize;
 }
+
+/* --- ESTILOS DO ANEXO (CORREÇÃO) --- */
+.anexo-card.com-anexo #anexo-placeholder {
+    display: none;
+}
+
+.anexo-card img {
+    width: 100%;
+    max-width: 100%; 
+    height: auto;
+    max-height: 500px; 
+    object-fit: contain; 
+    border-radius: var(--border-radius);
+    margin-top: 10px;
+    background-color: #000; 
+}
+/* --- FIM DA CORREÇÃO --- */
+
 
 /* ======================================= */
 /* --- ESTILOS DE MODAL E TOAST --- */
@@ -737,7 +760,6 @@ body {
 
 /* --- NOVO: Modal de Alocação --- */
 #alocar-modal-overlay {
-    /* Reutiliza o estilo do modal-overlay */
     position: fixed;
     top: 0;
     left: 0;
@@ -759,7 +781,6 @@ body {
 }
 
 #alocar-modal-overlay .modal-box {
-    /* Reutiliza o estilo do modal-box */
     background-color: var(--card-color);
     padding: 30px;
     border-radius: var(--border-radius);
@@ -815,17 +836,107 @@ body {
     margin-top: 15px;
 }
 
-.anexo-card.com-anexo #anexo-placeholder {
-    display: none; 
+/* --- NOVO: BOTÃO DE MENU MOBILE --- */
+.btn-menu-mobile {
+    display: none; /* Escondido no desktop */
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1001; /* Acima da sidebar */
 }
 
-.anexo-card img {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-    max-height: 500px; 
-    object-fit: contain;
-    border-radius: var(--border-radius);
-    margin-top: 10px;
-    background-color: #000; 
+.btn-menu-mobile span {
+    width: 30px;
+    height: 3px;
+    background-color: var(--text-color);
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+
+/* ================================================== */
+/* --- RESPONSIVIDADE (TELAS MENORES) --- */
+/* ================================================== */
+
+@media (max-width: 768px) {
+
+    /* --- Mostra o botão de menu --- */
+    .btn-menu-mobile {
+        display: flex;
+    }
+
+    /* --- Esconde a Sidebar e prepara para animação --- */
+    .app-sidebar {
+        transform: translateX(-100%); /* Começa fora da tela */
+        position: fixed;
+        z-index: 1000; /* Fica acima do conteúdo */
+    }
+
+    /* --- Classe ativa para mostrar a sidebar no mobile --- */
+    body.sidebar-mobile-active .app-sidebar {
+        transform: translateX(0); /* Puxa para dentro da tela */
+    }
+
+    /* --- Conteúdo Principal ocupa 100% --- */
+    .app-main-content {
+        margin-left: 0;
+        padding: 1.5rem; /* Padding menor em telas pequenas */
+    }
+
+    /* --- Cabeçalho --- */
+    .page-header h1 {
+        font-size: 1.5em; /* Título menor */
+        /* Remove o alinhamento centralizado se houver */
+        text-align: left; 
+        flex-grow: 1;
+    }
+    
+    .page-header {
+        justify-content: space-between;
+        gap: 15px; /* Adiciona espaço entre o botão e o título */
+    }
+
+    /* --- Cards de Stats --- */
+    .stats-container {
+        grid-template-columns: 1fr; /* 1 coluna */
+        gap: 15px;
+    }
+
+    /* --- Tabela --- */
+    .table-controls {
+        flex-direction: column;
+        gap: 15px;
+        min-width: 0; /* Permite que os controles quebrem a linha */
+    }
+    .search-container {
+        width: 100%;
+    }
+
+    /* --- Formulários --- */
+    .form-container {
+        max-width: 100%; /* Ocupa 100% no mobile */
+    }
+    .form-container .card {
+        padding: 20px; /* Padding normal no mobile */
+    }
+
+    /* --- Página de Detalhes --- */
+    .details-container {
+        padding: 0; /* Remove padding lateral no mobile */
+    }
+    .page-header-full {
+        padding: 15px;
+        justify-content: space-between;
+    }
+    .page-header-full h2 {
+        font-size: 1.2em;
+        flex-grow: 1;
+        text-align: center;
+    }
+
 }

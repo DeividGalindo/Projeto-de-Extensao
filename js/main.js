@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function initLoginPage() {
-        const loginForm = document.getElementById('form-login'); // Alterado para ID
+        const loginForm = document.getElementById('form-login');
         if (loginForm) {
             loginForm.addEventListener('submit', function(event) {
                 event.preventDefault();
@@ -946,6 +946,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
+            // --- NOVO: LÓGICA DO BOTÃO DE MENU MOBILE ---
+            if (target.closest('#btn-menu-mobile')) {
+                document.body.classList.toggle('sidebar-mobile-active');
+            }
+
+            // --- NOVO: FECHA O MENU SE CLICAR FORA ---
+            const sidebar = document.querySelector('.app-sidebar');
+            if (sidebar && document.body.classList.contains('sidebar-mobile-active') && !sidebar.contains(target) && !target.closest('#btn-menu-mobile')) {
+                document.body.classList.remove('sidebar-mobile-active');
+            }
+
+
             if (target.matches('.logout-link')) {
                 event.preventDefault(); 
                 
