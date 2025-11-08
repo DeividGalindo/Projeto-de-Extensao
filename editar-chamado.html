@@ -11,36 +11,57 @@
 </head>
 <body>
 
-    <div class="form-page-container">
+    <div class="app-layout">
         
-        <div class="form-box">
-            <h1>Editar Chamado</h1>
+        <aside class="app-sidebar">
+            <div class="logo">Service<span>Desk</span></div>
+            <nav class="sidebar-menu">
+                <h3>Tickets</h3>
+                <ul>
+                    <li><a href="#" id="btn-voltar-dashboard"> &larr; Voltar ao Painel</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="app-main-content">
             
-            <form id="form-editar-chamado">
-                <div class="input-group">
-                    <label for="titulo">Título</label>
-                    <input type="text" id="titulo" name="titulo" required>
-                </div>
+            <header class="page-header">
+                
+                <div style="width: 40px; flex-shrink: 0;"></div>
 
-                <div class="input-group">
-                    <label for="descricao">Descrição</label>
-                    <textarea id="descricao" name="descricao" rows="4" required></textarea>
-                </div>
+                <h1 style="flex-grow: 1; text-align: center;">Editar Chamado</h1>
 
-                <div class="input-group">
-                    <label for="categoria">Categoria</label>
-                    <select id="categoria" name="categoria">
-                        <option value="hardware">Hardware</option>
-                        <option value="software">Software</option>
-                        <option value="rede">Rede</option>
-                        <option value="outros">Outros</option>
-                    </select>
-                </div>
+                <div class="user-menu">
+                    </div>
+            </header>
 
-                <button type="submit" class="btn btn-accent">Salvar Alterações</button>
-                <button type="button" class="btn btn-secondary" id="btn-voltar-painel">Cancelar</button>
-            </form>
-        </div>
+            <div class="form-container"> <div class="card">
+                    <form id="form-editar-chamado">
+                        <div class="input-group">
+                            <label for="titulo">Título</label>
+                            <input type="text" id="titulo" name="titulo" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="descricao">Descrição</label>
+                            <textarea id="descricao" name="descricao" rows="4" required></textarea>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="categoria">Categoria</label>
+                            <select id="categoria" name="categoria">
+                                <option value="hardware">Hardware</option>
+                                <option value="software">Software</option>
+                                <option value="rede">Rede</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-accent" style="max-width: 250px; margin-left: 4rem;">Enviar Chamado</button>
+                        <button type="button" class="btn btn-secondary" id="btn-voltar-painel" style="max-width: 250px; margin-left: 4rem;">Cancelar</button>
+                    </form>
+                </div>
+            </div> </main>
     </div> 
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>

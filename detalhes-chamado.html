@@ -10,55 +10,72 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    
-    <header class="page-header-full">
-        <button class="btn-back" id="btn-voltar-dashboard">
-            &larr; 
-        </button>
-        <h2>Detalhes do Chamado</h2>
-        <div class="user-menu" style="min-width: 40px;"></div> 
-    </header>
 
-    <div class="details-container">
+    <div class="app-layout">
         
-        <section class="card details-card">
-            <h3 id="detalhes-titulo">Chamado #...</h3>
-            <p><strong>Status:</strong> <span class="status" id="detalhes-status">...</span></p>
-            <p><strong>Departamento:</strong> <span id="detalhes-departamento">...</span></p>
-            <p><strong>Prioridade:</strong> <span id="detalhes-prioridade">...</span></p>
-            <p><strong>Descrição:</strong> <span id="detalhes-descricao">...</span></p>
-        </section>
+        <aside class="app-sidebar">
+            <div class="logo">Service<span>Desk</span></div>
+            <nav class="sidebar-menu">
+                <h3>Tickets</h3>
+                <ul>
+                    <li><a href="#" id="btn-voltar-dashboard"> &larr; Voltar ao Painel</a></li>
+                </ul>
+            </nav>
+        </aside>
 
-        <section class="card" id="admin-ticket-controls" style="display: none;">
-            </section>
+        <main class="app-main-content">
+            
+            <header class="page-header">
+                
+                <div style="width: 40px; flex-shrink: 0;"></div>
 
-        <section class="card anexo-card" id="detalhes-anexo-container">
-            <h3>Anexo</h3>
-            <p id="anexo-placeholder">Nenhum anexo encontrado para este chamado.</p>
-        </section>
+                <h1 style="flex-grow: 1; text-align: center;">Detalhes do Chamado</h1>
 
-        <section class="card history-card">
-            <h3>Histórico de Atualizações</h3>
-            <ul class="history-list" id="detalhes-historico">
-                <li>Carregando histórico...</li>
-            </ul>
-        </section>
+                <div class="user-menu">
+                    </div>
+            </header>
 
-        <section class="card comment-form-card" style="display: none;">
-            <h3>Adicionar Comentário</h3>
-            <form id="form-add-comment">
-                <div class="input-group">
-                    <label for="novo-comentario">Sua mensagem:</label>
-                    <textarea id="novo-comentario" name="novo-comentario" rows="4" required></textarea>
+            <div class="details-container">
+                
+                <section class="card details-card">
+                    <h3 id="detalhes-titulo">Chamado #...</h3>
+                    <p><strong>Status:</strong> <span class="status" id="detalhes-status">...</span></p>
+                    <p><strong>Departamento:</strong> <span id="detalhes-departamento">...</span></p>
+                    <p><strong>Prioridade:</strong> <span id="detalhes-prioridade">...</span></p>
+                    <p><strong>Descrição:</strong> <span id="detalhes-descricao">...</span></p>
+                </section>
+        
+                <section class="card" id="admin-ticket-controls" style="display: none;">
+                    </section>
+        
+                <section class="card anexo-card" id="detalhes-anexo-container">
+                    <h3>Anexo</h3>
+                    <p id="anexo-placeholder">Nenhum anexo encontrado para este chamado.</p>
+                </section>
+        
+                <section class="card history-card">
+                    <h3>Histórico de Atualizações</h3>
+                    <ul class="history-list" id="detalhes-historico">
+                        <li>Carregando histórico...</li>
+                    </ul>
+                </section>
+        
+                <section class="card comment-form-card" style="display: none;">
+                    <h3>Adicionar Comentário</h3>
+                    <form id="form-add-comment">
+                        <div class="input-group">
+                            <label for="novo-comentario">Sua mensagem:</label>
+                            <textarea id="novo-comentario" name="novo-comentario" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-accent">Enviar Comentário</button>
+                    </form>
+                </section>
+        
                 </div>
-                <button type="submit" class="btn btn-accent">Enviar Comentário</button>
-            </form>
-        </section>
 
-        <button class="btn btn-secondary" id="btn-retornar-painel">Retornar ao Painel</button>
-    
+        </main>
     </div>
-
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>

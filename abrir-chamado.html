@@ -10,49 +10,72 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="form-page-container">
-        <div class="form-box">
-            <h1>Abertura de Chamado</h1>
-            <form id="form-abrir-chamado">
-                <div class="input-group">
-                    <label for="titulo">Título</label>
-                    <input type="text" id="titulo" name="titulo" required>
-                </div>
 
-                <div class="input-group">
-                    <label for="descricao">Descrição</label>
-                    <textarea id="descricao" name="descricao" rows="4" required></textarea>
-                </div>
+    <div class="app-layout">
+        
+        <aside class="app-sidebar">
+            <div class="logo">Service<span>Desk</span></div>
+            <nav class="sidebar-menu">
+                <h3>Tickets</h3>
+                <ul>
+                    <li><a href="#" id="btn-voltar-dashboard"> &larr; Voltar ao Painel</a></li>
+                </ul>
+            </nav>
+        </aside>
 
-                <div class="input-group">
-                    <label for="categoria">Categoria</label>
-                    <select id="categoria" name="categoria">
-                        <option value="hardware">Hardware</option>
-                        <option value="software">Software</option>
-                        <option value="rede">Rede</option>
-                        <option value="outros">Outros</option>
-                    </select>
-                </div>
+        <main class="app-main-content">
+            
+            <header class="page-header">
                 
-                <div class="input-group">
-                    <label for="anexo">Anexo (Imagem, máx 2MB):</label>
-                    <input type="file" id="anexo" name="anexo" class="input-file" accept="image/*">
-                    <label for="anexo" class="btn btn-secondary">Escolher arquivo</label>
-                    <span id="file-name-display" class="file-name">Nenhum arquivo selecionado</span>
-                </div>
+                <div style="width: 40px; flex-shrink: 0;"></div>
 
-                <button type="submit" class="btn btn-accent">Enviar Chamado</button>
-                <button type="button" class="btn btn-primary" id="btn-voltar-painel">Voltar ao Painel do Solicitante</button>
-            </form>
-        </div>
+                <h1 style="flex-grow: 1; text-align: center;">Abrir Novo Chamado</h1>
+
+                <div class="user-menu">
+                    </div>
+            </header>
+
+            <div class="form-container"> <div class="card">
+                    <form id="form-abrir-chamado">
+                        <div class="input-group">
+                            <label for="titulo">Título</label>
+                            <input type="text" id="titulo" name="titulo" required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="descricao">Descrição</label>
+                            <textarea id="descricao" name="descricao" rows="4" required></textarea>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="categoria">Categoria</label>
+                            <select id="categoria" name="categoria">
+                                <option value="hardware">Hardware</option>
+                                <option value="software">Software</option>
+                                <option value="rede">Rede</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="anexo">Anexo (Imagem, máx 2MB):</label>
+                            <input type="file" id="anexo" name="anexo" class="input-file" accept="image/*" style="display: none;">
+                            <label for="anexo" class="btn btn-secondary" style="width: auto; padding: 10px 15px; margin-top: 0; text-transform: none; font-weight: 400;">Escolher arquivo</label>
+                            <span id="file-name-display" class="file-name" style="text-align: left; display: inline; margin-left: 15px; opacity: 0.7;">Nenhum arquivo selecionado</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-accent" style="max-width: 250px; margin-left: 4rem;">Enviar Chamado</button>
+                        <button type="button" class="btn btn-secondary" id="btn-voltar-painel" style="max-width: 250px; margin-left: 4rem;">Cancelar</button>
+                    </form>
+                </div>
+            </div> </main>
     </div>
-        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-
     <script>
-
       const firebaseConfig = {
         apiKey: "AIzaSyDSyhME4d7gPzbkAOOZJo34vogcspOC6LQ",
         authDomain: "servicedesk-projeto-extensao.firebaseapp.com",
@@ -61,11 +84,8 @@
         messagingSenderId: "758697413283",
         appId: "1:758697413283:web:d709d07b27e293deee0d16"
       };
-
       firebase.initializeApp(firebaseConfig);
     </script>
-
     <script src="js/main.js"></script>
-
 </body>
 </html>
