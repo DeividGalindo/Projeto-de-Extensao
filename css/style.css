@@ -576,6 +576,10 @@ body {
     margin: 0 auto;  /* Centraliza o contêiner */
 }
 
+.form-container .card {
+    padding: 40px;
+}
+
 .card {
     background-color: var(--card-color);
     padding: 20px;
