@@ -14,18 +14,18 @@
     <div class="app-layout">
         
         <aside class="app-sidebar">
-    <div class="logo">Service<span>Desk</span></div>
-    <nav class="sidebar-menu">
-        <h3>Admin</h3>
-        <ul>
-            <li id="link-gerenciar-usuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
-        </ul>
+            <div class="logo">Service<span>Desk</span></div>
+            <nav class="sidebar-menu">
+                <h3>Admin</h3>
+                <ul>
+                    <li id="link-gerenciar-usuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                </ul>
 
-        <h3>Tickets</h3>
-        <ul>
-            <li><a href="#" id="btn-voltar-dashboard"> &larr; Voltar ao Painel</a></li>
-        </ul>
-    </nav>
+                <h3>Tickets</h3>
+                <ul>
+                    <li><a href="#" id="btn-voltar-dashboard"> &larr; Voltar ao Painel</a></li>
+                </ul>
+            </nav>
         </aside>
 
         <main class="app-main-content">
@@ -46,6 +46,12 @@
             <div class="details-container">
                 
                 <section class="card details-card">
+                    <button class="chat-icon-button" id="btn-open-chat-popup" title="Abrir Chat">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                        </svg>
+                    </button>
+                    
                     <h3 id="detalhes-titulo">Chamado #...</h3>
                     <p><strong>Status:</strong> <span class="status" id="detalhes-status">...</span></p>
                     <p><strong>Departamento:</strong> <span id="detalhes-departamento">...</span></p>
@@ -69,13 +75,13 @@
                 </section>
         
                 <section class="card comment-form-card" style="display: none;">
-                    <h3>Adicionar Comentário</h3>
+                    <h3>Adicionar Comentário (ao Histórico)</h3>
                     <form id="form-add-comment">
                         <div class="input-group">
                             <label for="novo-comentario">Sua mensagem:</label>
                             <textarea id="novo-comentario" name="novo-comentario" rows="4" required></textarea>
                         </div>
-                        <button type="submit" class="btn btn-accent">Enviar Comentário</button>
+                        <button type="submit" class="btn btn-accent">Adicionar ao Histórico</button>
                     </form>
                 </section>
         

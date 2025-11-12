@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return firebase.firestore.FieldValue.serverTimestamp();
     }
     
-    function formatarTimestamp(timestamp) {
+    function formatarTimestamp(timestamp, formato = 'longo') {
         let data;
         if (!timestamp) {
             return "Data pendente";
@@ -29,6 +29,11 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             return "Data inválida";
         }
+
+        if (formato === 'chat') {
+            return data.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+        
         return data.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 
@@ -118,6 +123,24 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         document.body.insertAdjacentHTML('beforeend', modalAlocarHTML);
+
+        // --- NOVO: INJETAR O HTML DO CHAT POPUP ---
+        const chatPopupHTML = `
+            <div class="chat-popup-window" id="chat-popup">
+                <div class="chat-popup-header">
+                    <h3>Chat Rápido</h3>
+                    <button class="btn-close-chat" id="btn-close-chat">&times;</button>
+                </div>
+                <div class="chat-messages" id="popup-chat-messages">
+                    <p style="text-align: center; opacity: 0.5;">Carregando...</p>
+                </div>
+                <form id="form-chat">
+                    <input type="text" id="chat-input" placeholder="Digite sua mensagem..." required>
+                    <button type="submit" class="btn btn-accent" id="btn-chat-enviar">Enviar</button>
+                </form>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', chatPopupHTML);
     }
 
     function showToast(message, type = 'info') {
@@ -447,13 +470,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (userRole === 'suporte') {
             query = query.where("categoria", "==", userArea);
-            // --- CORREÇÃO DO TÍTULO ---
             const headerTitle = document.querySelector('.page-header h1');
             if(headerTitle) headerTitle.textContent = "Painel de Suporte";
         } else if (userRole === 'admin') {
             areaFilterContainer.style.display = 'flex';
         }
-        // --- FIM DA CORREÇÃO ---
 
         query.orderBy("dataAbertura", "desc")
           .onSnapshot((querySnapshot) => {
@@ -766,10 +787,89 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    // --- LÓGICA DO CHAT MOVIDA PARA DENTRO DE initDetalhesPage ---
+    let unsubChat = null; // Variável para guardar o listener e poder removê-lo
+    
     function initDetalhesPage() {
         const params = new URLSearchParams(window.location.search);
         const ticketId = params.get('id');
         if (!ticketId) return; 
+
+        // --- INÍCIO DA LÓGICA DO CHAT POPUP ---
+        
+        const chatMessagesContainer = document.getElementById('popup-chat-messages');
+        const chatForm = document.getElementById('form-chat');
+        const chatInput = document.getElementById('chat-input');
+        const currentUser = auth.currentUser;
+
+        if (chatMessagesContainer && chatForm && currentUser) {
+            const chatRef = db.collection('chamados').doc(ticketId).collection('chat');
+
+            // 1. Ouvir por novas mensagens
+            // Usamos .onSnapshot para ouvir em tempo real
+            unsubChat = chatRef.orderBy("timestamp", "asc")
+                .onSnapshot((querySnapshot) => {
+                    
+                    chatMessagesContainer.innerHTML = ''; // Limpa o chat
+                    
+                    if (querySnapshot.empty) {
+                        chatMessagesContainer.innerHTML = '<p style="text-align: center; opacity: 0.5;">Nenhuma mensagem ainda.</p>';
+                        return;
+                    }
+
+                    querySnapshot.forEach((doc) => {
+                        const msg = doc.data();
+                        
+                        const msgDiv = document.createElement('div');
+                        msgDiv.className = 'chat-message';
+                        
+                        if (msg.autorUid === currentUser.uid) {
+                            msgDiv.classList.add('autor-eu');
+                        } else {
+                            msgDiv.classList.add('autor-outro');
+                        }
+
+                        msgDiv.innerHTML = `
+                            <span class="autor">${msg.autorNome} (${formatarTimestamp(msg.timestamp, 'chat')})</span>
+                            ${msg.texto}
+                        `;
+                        
+                        chatMessagesContainer.appendChild(msgDiv);
+                    });
+
+                    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                });
+
+            // 2. Enviar mensagem
+            // Clonamos o nó e o substituímos para evitar listeners duplicados
+            const newChatForm = chatForm.cloneNode(true);
+            chatForm.parentNode.replaceChild(newChatForm, chatForm);
+            const newChatInput = document.getElementById('chat-input'); // Re-seleciona o input
+
+            newChatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const texto = newChatInput.value.trim();
+                if (texto === "") return;
+
+                const novaMensagem = {
+                    texto: texto,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    autorUid: currentUser.uid,
+                    autorNome: currentUser.displayName || currentUser.email
+                };
+
+                chatRef.add(novaMensagem)
+                    .then(() => {
+                        newChatInput.value = ''; 
+                    })
+                    .catch(err => {
+                        console.error("Erro ao enviar mensagem: ", err);
+                        showToast("Não foi possível enviar a mensagem.", "error");
+                    });
+            });
+        }
+        // --- FIM DA LÓGICA DO CHAT POPUP ---
+
 
         const docRef = db.collection("chamados").doc(ticketId);
         const historyList = document.getElementById('detalhes-historico');
@@ -1169,6 +1269,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (id === 'alocar-btn-cancel') {
                 closeAlocarModal();
             }
+
+            // --- NOVOS EVENTOS PARA O POPUP DE CHAT ---
+            if (target.closest('#btn-open-chat-popup')) {
+                document.getElementById('chat-popup').classList.add('show');
+            }
+            if (target.closest('#btn-close-chat')) {
+                document.getElementById('chat-popup').classList.remove('show');
+            }
         });
 
         const formAlocar = document.getElementById('form-alocar-chamado');
@@ -1200,7 +1308,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const onLoginPage = document.querySelector('.login-box');
         const onAppPage = document.querySelector('.app-layout');
-        const onRegistroPage = document.getElementById('form-registrar'); // MUDANÇA AQUI
+        const onRegistroPage = document.getElementById('form-registrar');
 
         if (!user) {
             localStorage.removeItem('usuarioLogado');
@@ -1216,7 +1324,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (onLoginPage) {
                 if (document.getElementById('form-login')) { 
                     initLoginPage();
-                } else if (onRegistroPage) { // MUDANÇA AQUI
+                } else if (onRegistroPage) {
                     initRegistrarPage();
                 } else if (document.getElementById('form-esqueci-senha')) { 
                     initEsqueciSenhaPage();
@@ -1225,13 +1333,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
         } 
         else { 
-            // --- CORREÇÃO DE BUG DE REGISTRO ---
-            // Se o usuário está logado MAS na página de registro,
-            // não faça nada e deixe o initRegistrarPage terminar.
             if (onRegistroPage) {
                 return;
             }
-            // --- FIM DA CORREÇÃO ---
 
             localStorage.setItem('usuarioLogado', user.displayName || user.email);
             localStorage.setItem('usuarioUid', user.uid);
@@ -1258,7 +1362,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         userRole = 'admin';
                         userArea = null;
                     } else {
-                        // Segurança: se o doc não existe e não é admin, cria um
                         await userDocRef.set({
                             uid: user.uid,
                             nomeCompleto: user.displayName || "Usuário sem nome",
