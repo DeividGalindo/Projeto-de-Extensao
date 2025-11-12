@@ -221,22 +221,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const user = auth.currentUser;
         const nomeUsuario = user ? (user.displayName || user.email) : 'Visitante';
-        const userRole = localStorage.getItem('usuarioRole');
         
         if (user) {
             localStorage.setItem('usuarioLogado', nomeUsuario);
         }
         
-        let adminLink = '';
-        if (userRole === 'admin') {
-            adminLink = `<a href="gerenciar-usuarios.html" class="admin-link">Gerenciar Usuários</a>`;
-        }
-
+        // --- REMOVIDO: O link de admin não é mais injetado aqui ---
         const navbarHTML = `
             <img src="img/icone_usuario.png" alt="Ícone do Usuário" class="user-icon">
             <div class="dropdown-menu">
                 <span class="user-name">${nomeUsuario}</span>
-                ${adminLink}
                 <a href="#" class="logout-link">Logout</a>
             </div>
         `;
@@ -283,7 +277,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 uid: user.uid,
                                 nomeCompleto: "Admin Master",
                                 email: user.email,
-                                role: "admin"
+                                role: "admin",
+                                area: null // Adicionado
                             });
                             localStorage.setItem('usuarioRole', 'admin');
                             window.location.href = 'dashboard-admin.html';
@@ -949,7 +944,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 nomeCompleto: nomeCompleto,
                                 email: email,
                                 username: username,
-                                role: "solicitante" 
+                                role: "solicitante",
+                                area: null // Adicionado
                             }).then(() => {
                                 alert("Conta criada com sucesso! Você será redirecionado para a página de login.");
                                 auth.signOut();
@@ -974,22 +970,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function initGerenciarUsuarios() {
         const container = document.getElementById('user-list-container');
         if (!container) return;
-
+    
         if (localStorage.getItem('usuarioRole') !== 'admin') {
             showToast("Acesso negado.", "error");
             window.location.href = 'dashboard-admin.html';
             return;
         }
-
+    
         db.collection("users").get().then((querySnapshot) => {
             container.innerHTML = '';
             querySnapshot.forEach((doc) => {
                 const user = doc.data();
-
+    
                 if (user.role === 'admin') return;
-
+    
                 const card = document.createElement('div');
                 card.className = 'user-management-card';
+                
+                // HTML do card
                 card.innerHTML = `
                     <div class="user-management-info">
                         <h4>${user.nomeCompleto}</h4>
@@ -999,22 +997,52 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="solicitante" ${user.role === 'solicitante' ? 'selected' : ''}>Usuario</option>
                         <option value="suporte" ${user.role === 'suporte' ? 'selected' : ''}>Suporte</option>
                     </select>
+                    
+                    <div class="area-select-container" id="area-container-${user.uid}" style="display: ${user.role === 'suporte' ? 'block' : 'none'};">
+                        <label>Área de Suporte:</label>
+                        <select class="area-select" data-uid="${user.uid}">
+                            <option value="null" ${!user.area ? 'selected' : ''}>Nenhuma</option>
+                            <option value="hardware" ${user.area === 'hardware' ? 'selected' : ''}>Hardware</option>
+                            <option value="software" ${user.area === 'software' ? 'selected' : ''}>Software</option>
+                            <option value="rede" ${user.area === 'rede' ? 'selected' : ''}>Rede</option>
+                            <option value="outros" ${user.area === 'outros' ? 'selected' : ''}>Outros</option>
+                        </select>
+                    </div>
                 `;
                 container.appendChild(card);
             });
-
+    
+            // Adicionar listeners para os dropdowns de ROLE
             document.querySelectorAll('.user-role-select').forEach(select => {
                 select.addEventListener('change', (event) => {
                     const newRole = event.target.value;
                     const uid = event.target.dataset.uid;
+                    const areaContainer = document.getElementById(`area-container-${uid}`);
                     
-                    db.collection('users').doc(uid).update({
-                        role: newRole
-                    }).then(() => {
-                        showToast("Permissão atualizada!", "success");
-                    }).catch(err => {
-                        showToast("Erro ao atualizar permissão.", "error");
-                    });
+                    let updateData = { role: newRole };
+    
+                    if (newRole === 'suporte') {
+                        areaContainer.style.display = 'block';
+                    } else {
+                        areaContainer.style.display = 'none';
+                        updateData.area = null; // Limpa a área se voltar a ser solicitante
+                    }
+
+                    db.collection('users').doc(uid).update(updateData)
+                        .then(() => showToast("Permissão atualizada!", "success"))
+                        .catch(err => showToast("Erro ao atualizar permissão.", "error"));
+                });
+            });
+
+            // Adicionar listeners para os dropdowns de ÁREA
+            document.querySelectorAll('.area-select').forEach(select => {
+                select.addEventListener('change', (event) => {
+                    const newArea = event.target.value === 'null' ? null : event.target.value;
+                    const uid = event.target.dataset.uid;
+                    
+                    db.collection('users').doc(uid).update({ area: newArea })
+                        .then(() => showToast("Área do suporte atualizada!", "success"))
+                        .catch(err => showToast("Erro ao atualizar área.", "error"));
                 });
             });
         });
@@ -1167,10 +1195,8 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('usuarioLogado', user.displayName || user.email);
             localStorage.setItem('usuarioUid', user.uid);
             
-            // --- LÓGICA DE BUSCAR ROLE ATUALIZADA ---
             let userRole = localStorage.getItem('usuarioRole');
             
-            // Se a role não estiver no cache, busca no Firestore
             if (!userRole) {
                 try {
                     const userDocRef = db.collection('users').doc(user.uid);
@@ -1178,26 +1204,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (userDoc.exists) {
                         userRole = userDoc.data().role || 'solicitante';
                     } else if (user.email === 'adm@admin.com') {
-                        // Caso especial para criar o admin master se ele não existir
                         await userDocRef.set({
                             uid: user.uid,
                             nomeCompleto: "Admin Master",
                             email: user.email,
-                            role: "admin"
+                            role: "admin",
+                            area: null
                         });
                         userRole = 'admin';
                     } else {
-                        userRole = 'solicitante'; // Padrão
+                        userRole = 'solicitante'; 
                     }
                     localStorage.setItem('usuarioRole', userRole);
                 } catch (e) {
                     console.error("Erro ao buscar role:", e);
-                    userRole = 'solicitante'; // Define um padrão em caso de erro
+                    userRole = 'solicitante';
                 }
             }
             
-            // --- FIM DA LÓGICA DE ROLE ---
-
             if (onLoginPage) {
                 if (userRole === 'admin' || userRole === 'suporte') {
                     window.location.href = 'dashboard-admin.html';
@@ -1211,7 +1235,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 injetaNavbar(); 
                 bindGlobalNavigators(); 
 
-                // Roteamento de JS baseado na página
+                // --- NOVA LÓGICA DE VISIBILIDADE DO LINK DE ADMIN ---
+                const linkGerenciar = document.getElementById('link-gerenciar-usuarios');
+                if (linkGerenciar) {
+                    if (userRole === 'admin') {
+                        linkGerenciar.style.display = 'block';
+                    } else {
+                        linkGerenciar.style.display = 'none';
+                    }
+                }
+                // --- FIM DA LÓGICA DE VISIBILIDADE ---
+
                 if (document.getElementById('admin-ticket-list')) {
                     initAdminDashboard();
                 } else if (document.getElementById('user-ticket-list')) {

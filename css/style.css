@@ -874,12 +874,17 @@ body {
 /* --- NOVO: Estilos da Página Gerenciar Usuários --- */
 .user-management-card {
     display: flex;
+    flex-wrap: wrap; /* Permite que o novo seletor quebre a linha */
     justify-content: space-between;
     align-items: center;
     padding: 15px;
     background-color: var(--input-color);
     border-radius: var(--border-radius);
     margin-bottom: 10px;
+}
+.user-management-info {
+    flex-basis: 50%; /* Ocupa metade da largura */
+    flex-grow: 1;
 }
 .user-management-info h4 {
     margin: 0 0 5px 0;
@@ -897,6 +902,24 @@ body {
     border-radius: var(--border-radius);
     color: var(--text-color);
     font-family: 'Poppins', sans-serif;
+    margin-top: 5px; /* Adiciona espaço */
+}
+
+/* Container para o seletor de área */
+.area-select-container {
+    display: none; /* Escondido por padrão */
+    flex-basis: 100%; /* Ocupa a linha inteira abaixo */
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--bg-color);
+}
+.area-select-container label {
+    font-size: 0.9em;
+    opacity: 0.7;
+    margin-right: 10px;
+}
+.area-select-container select {
+    width: auto;
 }
 
 
