@@ -14,18 +14,18 @@
     <div class="app-layout">
         
         <aside class="app-sidebar">
-    <div class="logo">Service<span>Desk</span></div>
-    <nav class="sidebar-menu">
-        <h3>Admin</h3>
-        <ul>
-            <li><a href="dashboard-admin.html" class="active">Painel Principal</a></li>
-            <li id="link-gerenciar-usuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
-        </ul>
-        <h3>Tickets</h3>
-        <ul>
-            <li><a href="dashboard-admin.html" class="active">Todos Chamados</a></li>
-        </ul>
-    </nav>
+            <div class="logo">Service<span>Desk</span></div>
+            <nav class="sidebar-menu">
+                <h3>Admin</h3>
+                <ul>
+                    <li><a href="dashboard-admin.html" class="active">Painel Principal</a></li>
+                    <li id="link-gerenciar-usuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                </ul>
+                <h3>Tickets</h3>
+                <ul>
+                    <li><a href="dashboard-admin.html" class="active">Todos Chamados</a></li>
+                </ul>
+            </nav>
         </aside>
 
         <main class="app-main-content">
@@ -36,8 +36,7 @@
                     <span></span>
                     <span></span>
                 </button>
-
-                <h1>Painel do Administrador</h1>
+                <h1>Painel de Controle</h1>
                 <div class="user-menu">
                     </div>
             </header>
@@ -65,9 +64,17 @@
 
             <div class="tickets-table-container">
                 
+                <div class="filter-container" id="filter-container-area-admin" style="display: none; margin-bottom: 15px; border-bottom: 1px solid var(--input-color); padding-bottom: 15px;">
+                    <button class="btn btn-filter active" data-area="todos">Todas as Áreas</button>
+                    <button class="btn btn-filter" data-area="hardware">Hardware</button>
+                    <button class="btn btn-filter" data-area="software">Software</button>
+                    <button class="btn btn-filter" data-area="rede">Rede</button>
+                    <button class="btn btn-filter" data-area="outros">Outros</button>
+                </div>
+
                 <div class="table-controls">
                     <div class="filter-container" id="filter-container-admin">
-                        <button class="btn btn-filter active" data-status="todos">Todos</button>
+                        <button class="btn btn-filter active" data-status="todos">Todos Status</button>
                         <button class="btn btn-filter" data-status="Aberto">Abertos</button>
                         <button class="btn btn-filter" data-status="Em Progresso">Em Andamento</button>
                         <button class="btn btn-filter" data-status="Fechado">Finalizados</button>

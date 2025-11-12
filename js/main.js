@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let filtroStatusUsuario = 'todos';
     let filtroStatusAdmin = 'todos';
-
+    let filtroAreaAdmin = 'todos'; 
     let ticketIdParaAlocar = null;
 
     function getTimestampAtual() {
@@ -226,7 +226,6 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('usuarioLogado', nomeUsuario);
         }
         
-        // --- REMOVIDO: O link de admin não é mais injetado aqui ---
         const navbarHTML = `
             <img src="img/icone_usuario.png" alt="Ícone do Usuário" class="user-icon">
             <div class="dropdown-menu">
@@ -278,17 +277,22 @@ document.addEventListener('DOMContentLoaded', function() {
                                 nomeCompleto: "Admin Master",
                                 email: user.email,
                                 role: "admin",
-                                area: null // Adicionado
+                                area: null 
                             });
                             localStorage.setItem('usuarioRole', 'admin');
+                            localStorage.setItem('usuarioArea', "null");
                             window.location.href = 'dashboard-admin.html';
                         } else {
                             showToast("Erro: Perfil de usuário não encontrado.", "error");
                             auth.signOut();
                         }
                     } else {
-                        const userRole = userDoc.data().role || 'solicitante';
+                        const userData = userDoc.data();
+                        const userRole = userData.role || 'solicitante';
+                        const userArea = userData.area || null;
+                        
                         localStorage.setItem('usuarioRole', userRole);
+                        localStorage.setItem('usuarioArea', userArea);
 
                         if (userRole === 'admin' || userRole === 'suporte') {
                             window.location.href = 'dashboard-admin.html';
@@ -363,7 +367,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return chamado.status === filtroStatusAdmin;
         });
 
-        const chamadosFiltrados = chamadosFiltradosPorStatus.filter(chamado => {
+        const chamadosFiltradosPorArea = chamadosFiltradosPorStatus.filter(chamado => {
+            if (filtroAreaAdmin === 'todos') return true;
+            return chamado.categoria === filtroAreaAdmin;
+        });
+
+        const chamadosFiltrados = chamadosFiltradosPorArea.filter(chamado => {
             const titulo = chamado.titulo.toLowerCase();
             const id = chamado.numeroChamado ? chamado.numeroChamado.toString() : '';
             return titulo.includes(searchTerm) || id.includes(searchTerm);
@@ -427,11 +436,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initAdminDashboard() {
         const searchInput = document.getElementById('campo-busca-admin');
-        const filterContainer = document.getElementById('filter-container-admin');
-        if (!searchInput || !filterContainer) return;
+        const statusFilterContainer = document.getElementById('filter-container-admin');
+        const areaFilterContainer = document.getElementById('filter-container-area-admin'); 
+        if (!searchInput || !statusFilterContainer || !areaFilterContainer) return;
 
-        db.collection("chamados")
-          .orderBy("dataAbertura", "desc")
+        const userRole = localStorage.getItem('usuarioRole');
+        const userArea = localStorage.getItem('usuarioArea');
+
+        let query = db.collection("chamados");
+
+        if (userRole === 'suporte') {
+            query = query.where("categoria", "==", userArea);
+            // --- CORREÇÃO DO TÍTULO ---
+            const headerTitle = document.querySelector('.page-header h1');
+            if(headerTitle) headerTitle.textContent = "Painel de Suporte";
+        } else if (userRole === 'admin') {
+            areaFilterContainer.style.display = 'flex';
+        }
+        // --- FIM DA CORREÇÃO ---
+
+        query.orderBy("dataAbertura", "desc")
           .onSnapshot((querySnapshot) => {
             chamadosDoAdminCache = [];
             querySnapshot.forEach((doc) => {
@@ -445,11 +469,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         searchInput.addEventListener('keyup', renderAdminList);
         
-        filterContainer.addEventListener('click', function(event) {
+        statusFilterContainer.addEventListener('click', function(event) {
             if (event.target.classList.contains('btn-filter')) {
-                filterContainer.querySelector('.active').classList.remove('active');
+                statusFilterContainer.querySelector('.active').classList.remove('active');
                 event.target.classList.add('active');
                 filtroStatusAdmin = event.target.dataset.status;
+                renderAdminList();
+            }
+        });
+
+        areaFilterContainer.addEventListener('click', function(event) {
+            if (event.target.classList.contains('btn-filter')) {
+                areaFilterContainer.querySelector('.active').classList.remove('active');
+                event.target.classList.add('active');
+                filtroAreaAdmin = event.target.dataset.area;
                 renderAdminList();
             }
         });
@@ -945,7 +978,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 email: email,
                                 username: username,
                                 role: "solicitante",
-                                area: null // Adicionado
+                                area: null 
                             }).then(() => {
                                 alert("Conta criada com sucesso! Você será redirecionado para a página de login.");
                                 auth.signOut();
@@ -987,7 +1020,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const card = document.createElement('div');
                 card.className = 'user-management-card';
                 
-                // HTML do card
                 card.innerHTML = `
                     <div class="user-management-info">
                         <h4>${user.nomeCompleto}</h4>
@@ -1012,7 +1044,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 container.appendChild(card);
             });
     
-            // Adicionar listeners para os dropdowns de ROLE
             document.querySelectorAll('.user-role-select').forEach(select => {
                 select.addEventListener('change', (event) => {
                     const newRole = event.target.value;
@@ -1025,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         areaContainer.style.display = 'block';
                     } else {
                         areaContainer.style.display = 'none';
-                        updateData.area = null; // Limpa a área se voltar a ser solicitante
+                        updateData.area = null; 
                     }
 
                     db.collection('users').doc(uid).update(updateData)
@@ -1034,7 +1065,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
 
-            // Adicionar listeners para os dropdowns de ÁREA
             document.querySelectorAll('.area-select').forEach(select => {
                 select.addEventListener('change', (event) => {
                     const newArea = event.target.value === 'null' ? null : event.target.value;
@@ -1078,6 +1108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     localStorage.removeItem('usuarioLogado'); 
                     localStorage.removeItem('usuarioRole');
                     localStorage.removeItem('usuarioUid');
+                    localStorage.removeItem('usuarioArea');
                     showToast("Você foi desconectado.", "info");
                     
                     setTimeout(() => {
@@ -1169,11 +1200,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const onLoginPage = document.querySelector('.login-box');
         const onAppPage = document.querySelector('.app-layout');
+        const onRegistroPage = document.getElementById('form-registrar'); // MUDANÇA AQUI
 
         if (!user) {
             localStorage.removeItem('usuarioLogado');
             localStorage.removeItem('usuarioRole');
             localStorage.removeItem('usuarioUid');
+            localStorage.removeItem('usuarioArea');
             
             if (onAppPage) {
                 window.location.href = 'index.html';
@@ -1183,7 +1216,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (onLoginPage) {
                 if (document.getElementById('form-login')) { 
                     initLoginPage();
-                } else if (document.getElementById('form-registrar')) { 
+                } else if (onRegistroPage) { // MUDANÇA AQUI
                     initRegistrarPage();
                 } else if (document.getElementById('form-esqueci-senha')) { 
                     initEsqueciSenhaPage();
@@ -1191,18 +1224,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
         } 
-        else {
+        else { 
+            // --- CORREÇÃO DE BUG DE REGISTRO ---
+            // Se o usuário está logado MAS na página de registro,
+            // não faça nada e deixe o initRegistrarPage terminar.
+            if (onRegistroPage) {
+                return;
+            }
+            // --- FIM DA CORREÇÃO ---
+
             localStorage.setItem('usuarioLogado', user.displayName || user.email);
             localStorage.setItem('usuarioUid', user.uid);
             
             let userRole = localStorage.getItem('usuarioRole');
+            let userArea = localStorage.getItem('usuarioArea');
             
-            if (!userRole) {
+            if (!userRole) { 
                 try {
                     const userDocRef = db.collection('users').doc(user.uid);
                     const userDoc = await userDocRef.get();
                     if (userDoc.exists) {
-                        userRole = userDoc.data().role || 'solicitante';
+                        const userData = userDoc.data();
+                        userRole = userData.role || 'solicitante';
+                        userArea = userData.area || null;
                     } else if (user.email === 'adm@admin.com') {
                         await userDocRef.set({
                             uid: user.uid,
@@ -1212,13 +1256,25 @@ document.addEventListener('DOMContentLoaded', function() {
                             area: null
                         });
                         userRole = 'admin';
+                        userArea = null;
                     } else {
+                        // Segurança: se o doc não existe e não é admin, cria um
+                        await userDocRef.set({
+                            uid: user.uid,
+                            nomeCompleto: user.displayName || "Usuário sem nome",
+                            email: user.email,
+                            role: "solicitante",
+                            area: null
+                        });
                         userRole = 'solicitante'; 
+                        userArea = null;
                     }
                     localStorage.setItem('usuarioRole', userRole);
+                    localStorage.setItem('usuarioArea', userArea || "null");
                 } catch (e) {
                     console.error("Erro ao buscar role:", e);
                     userRole = 'solicitante';
+                    userArea = null;
                 }
             }
             
@@ -1235,7 +1291,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 injetaNavbar(); 
                 bindGlobalNavigators(); 
 
-                // --- NOVA LÓGICA DE VISIBILIDADE DO LINK DE ADMIN ---
                 const linkGerenciar = document.getElementById('link-gerenciar-usuarios');
                 if (linkGerenciar) {
                     if (userRole === 'admin') {
@@ -1244,7 +1299,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         linkGerenciar.style.display = 'none';
                     }
                 }
-                // --- FIM DA LÓGICA DE VISIBILIDADE ---
 
                 if (document.getElementById('admin-ticket-list')) {
                     initAdminDashboard();
