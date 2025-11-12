@@ -221,15 +221,22 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const user = auth.currentUser;
         const nomeUsuario = user ? (user.displayName || user.email) : 'Visitante';
+        const userRole = localStorage.getItem('usuarioRole');
         
         if (user) {
             localStorage.setItem('usuarioLogado', nomeUsuario);
         }
         
+        let adminLink = '';
+        if (userRole === 'admin') {
+            adminLink = `<a href="gerenciar-usuarios.html" class="admin-link">Gerenciar Usuários</a>`;
+        }
+
         const navbarHTML = `
             <img src="img/icone_usuario.png" alt="Ícone do Usuário" class="user-icon">
             <div class="dropdown-menu">
                 <span class="user-name">${nomeUsuario}</span>
+                ${adminLink}
                 <a href="#" class="logout-link">Logout</a>
             </div>
         `;
@@ -257,24 +264,51 @@ document.addEventListener('DOMContentLoaded', function() {
     function initLoginPage() {
         const loginForm = document.getElementById('form-login');
         if (loginForm) {
-            loginForm.addEventListener('submit', function(event) {
+            loginForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
 
-                auth.signInWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        const user = userCredential.user;
-                        localStorage.setItem('usuarioLogado', user.displayName || user.email); 
-                    })
-                    .catch((error) => {
-                        console.error("Erro de login:", error.code);
-                        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                            showToast("Email ou senha incorretos.", "error");
+                try {
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+                    localStorage.setItem('usuarioLogado', user.displayName || user.email); 
+
+                    const userDocRef = db.collection('users').doc(user.uid);
+                    const userDoc = await userDocRef.get();
+
+                    if (!userDoc.exists) {
+                        if (user.email === 'adm@admin.com') {
+                            await userDocRef.set({
+                                uid: user.uid,
+                                nomeCompleto: "Admin Master",
+                                email: user.email,
+                                role: "admin"
+                            });
+                            localStorage.setItem('usuarioRole', 'admin');
+                            window.location.href = 'dashboard-admin.html';
                         } else {
-                            showToast("Erro ao fazer login. Tente novamente.", "error");
+                            showToast("Erro: Perfil de usuário não encontrado.", "error");
+                            auth.signOut();
                         }
-                    });
+                    } else {
+                        const userRole = userDoc.data().role || 'solicitante';
+                        localStorage.setItem('usuarioRole', userRole);
+
+                        if (userRole === 'admin' || userRole === 'suporte') {
+                            window.location.href = 'dashboard-admin.html';
+                        } else {
+                            window.location.href = 'dashboard.html';
+                        }
+                    }
+                } catch (error) {
+                    console.error("Erro de login:", error.code);
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                        showToast("Email ou senha incorretos.", "error");
+                    } else {
+                        showToast("Erro ao fazer login. Tente novamente.", "error");
+                    }
+                }
             });
         }
     }
@@ -652,7 +686,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const chamadoParaEditar = doc.data();
                 
-                if (chamadoParaEditar.userId !== user.uid && user.email !== 'adm@admin.com') {
+                const userRole = localStorage.getItem('usuarioRole');
+                if (chamadoParaEditar.userId !== user.uid && userRole !== 'admin' && userRole !== 'suporte') {
                     showToast("Você não tem permissão para editar este chamado.", "error");
                     window.location.href = 'dashboard.html';
                     return;
@@ -685,7 +720,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(() => {
                         alert("Chamado atualizado com sucesso!");
-                        if (user.email === 'adm@admin.com') {
+                        if (userRole === 'admin' || userRole === 'suporte') {
                             window.location.href = 'dashboard-admin.html';
                         } else {
                             window.location.href = 'dashboard.html';
@@ -777,7 +812,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const commentFormCard = document.querySelector('.comment-form-card');
             const adminControls = document.getElementById('admin-ticket-controls');
             
-            if (auth.currentUser.email === 'adm@admin.com') {
+            const userRole = localStorage.getItem('usuarioRole');
+            if (userRole === 'admin' || userRole === 'suporte') {
                 if (commentFormCard) commentFormCard.style.display = 'block';
                 if (adminControls) adminControls.style.display = 'block';
                 
@@ -916,6 +952,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 role: "solicitante" 
                             }).then(() => {
                                 alert("Conta criada com sucesso! Você será redirecionado para a página de login.");
+                                auth.signOut();
                                 window.location.href = 'index.html';
                             });
                         });
@@ -934,6 +971,56 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function initGerenciarUsuarios() {
+        const container = document.getElementById('user-list-container');
+        if (!container) return;
+
+        if (localStorage.getItem('usuarioRole') !== 'admin') {
+            showToast("Acesso negado.", "error");
+            window.location.href = 'dashboard-admin.html';
+            return;
+        }
+
+        db.collection("users").get().then((querySnapshot) => {
+            container.innerHTML = '';
+            querySnapshot.forEach((doc) => {
+                const user = doc.data();
+
+                if (user.role === 'admin') return;
+
+                const card = document.createElement('div');
+                card.className = 'user-management-card';
+                card.innerHTML = `
+                    <div class="user-management-info">
+                        <h4>${user.nomeCompleto}</h4>
+                        <p>${user.email}</p>
+                    </div>
+                    <select class="user-role-select" data-uid="${user.uid}">
+                        <option value="solicitante" ${user.role === 'solicitante' ? 'selected' : ''}>Usuario</option>
+                        <option value="suporte" ${user.role === 'suporte' ? 'selected' : ''}>Suporte</option>
+                    </select>
+                `;
+                container.appendChild(card);
+            });
+
+            document.querySelectorAll('.user-role-select').forEach(select => {
+                select.addEventListener('change', (event) => {
+                    const newRole = event.target.value;
+                    const uid = event.target.dataset.uid;
+                    
+                    db.collection('users').doc(uid).update({
+                        role: newRole
+                    }).then(() => {
+                        showToast("Permissão atualizada!", "success");
+                    }).catch(err => {
+                        showToast("Erro ao atualizar permissão.", "error");
+                    });
+                });
+            });
+        });
+    }
+
+
     function bindGlobalNavigators() {
         document.body.addEventListener('click', function(event) {
             const target = event.target; 
@@ -946,12 +1033,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // --- NOVO: LÓGICA DO BOTÃO DE MENU MOBILE ---
             if (target.closest('#btn-menu-mobile')) {
                 document.body.classList.toggle('sidebar-mobile-active');
             }
 
-            // --- NOVO: FECHA O MENU SE CLICAR FORA ---
             const sidebar = document.querySelector('.app-sidebar');
             if (sidebar && document.body.classList.contains('sidebar-mobile-active') && !sidebar.contains(target) && !target.closest('#btn-menu-mobile')) {
                 document.body.classList.remove('sidebar-mobile-active');
@@ -1014,7 +1099,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const id = target.id;
             if (id === 'btn-voltar-painel' || id === 'btn-ir-painel' || id === 'btn-retornar-painel' || id === 'btn-voltar-dashboard') {
-                if (document.referrer.includes('dashboard-admin.html')) {
+                const userRole = localStorage.getItem('usuarioRole');
+                if (userRole === 'admin' || userRole === 'suporte') {
                      window.location.href = 'dashboard-admin.html';
                 } else {
                      window.location.href = 'dashboard.html';
@@ -1047,23 +1133,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     
-    auth.onAuthStateChanged(function(user) {
+    auth.onAuthStateChanged(async function(user) {
         
-        injectNotificationContainers(); 
-        injetaNavbar(); 
-        
-        bindGlobalNavigators(); 
-
+        injectNotificationContainers();
         setupDatabase();
-        iniciarRelogio(); 
+        iniciarRelogio();
         
         const onLoginPage = document.querySelector('.login-box');
         const onAppPage = document.querySelector('.app-layout');
 
         if (!user) {
+            localStorage.removeItem('usuarioLogado');
+            localStorage.removeItem('usuarioRole');
+            localStorage.removeItem('usuarioUid');
             
             if (onAppPage) {
-                console.log("Usuário não logado, redirecionando para o login.");
                 window.location.href = 'index.html';
                 return;
             }
@@ -1080,12 +1164,42 @@ document.addEventListener('DOMContentLoaded', function() {
             
         } 
         else {
-            
             localStorage.setItem('usuarioLogado', user.displayName || user.email);
             localStorage.setItem('usuarioUid', user.uid);
             
+            // --- LÓGICA DE BUSCAR ROLE ATUALIZADA ---
+            let userRole = localStorage.getItem('usuarioRole');
+            
+            // Se a role não estiver no cache, busca no Firestore
+            if (!userRole) {
+                try {
+                    const userDocRef = db.collection('users').doc(user.uid);
+                    const userDoc = await userDocRef.get();
+                    if (userDoc.exists) {
+                        userRole = userDoc.data().role || 'solicitante';
+                    } else if (user.email === 'adm@admin.com') {
+                        // Caso especial para criar o admin master se ele não existir
+                        await userDocRef.set({
+                            uid: user.uid,
+                            nomeCompleto: "Admin Master",
+                            email: user.email,
+                            role: "admin"
+                        });
+                        userRole = 'admin';
+                    } else {
+                        userRole = 'solicitante'; // Padrão
+                    }
+                    localStorage.setItem('usuarioRole', userRole);
+                } catch (e) {
+                    console.error("Erro ao buscar role:", e);
+                    userRole = 'solicitante'; // Define um padrão em caso de erro
+                }
+            }
+            
+            // --- FIM DA LÓGICA DE ROLE ---
+
             if (onLoginPage) {
-                if (user.email === 'adm@admin.com') {
+                if (userRole === 'admin' || userRole === 'suporte') {
                     window.location.href = 'dashboard-admin.html';
                 } else {
                     window.location.href = 'dashboard.html';
@@ -1094,6 +1208,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (onAppPage) {
+                injetaNavbar(); 
+                bindGlobalNavigators(); 
+
+                // Roteamento de JS baseado na página
                 if (document.getElementById('admin-ticket-list')) {
                     initAdminDashboard();
                 } else if (document.getElementById('user-ticket-list')) {
@@ -1104,15 +1222,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     initEditarChamadoPage();
                 } else if (document.getElementById('detalhes-titulo')) {
                     initDetalhesPage();
-                }
-
-                const searchInputAdmin = document.getElementById('campo-busca-admin');
-                if (searchInputAdmin) {
-                    searchInputAdmin.addEventListener('keyup', renderAdminList);
-                }
-                const searchInputUser = document.getElementById('campo-busca-user');
-                if (searchInputUser) {
-                    searchInputUser.addEventListener('keyup', renderUserList);
+                } else if (document.getElementById('user-list-container')) {
+                    initGerenciarUsuarios();
                 }
             }
         }
