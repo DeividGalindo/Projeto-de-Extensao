@@ -277,6 +277,13 @@ body {
     font-size: 2em;
 }
 
+/* --- NOVO: Container para Ações do Usuário no Header --- */
+.header-user-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 /* Ícone de Usuário (Header) */
 .user-menu {
     position: relative;
@@ -572,7 +579,7 @@ body {
 .details-container {
     max-width: 800px;
     margin: 2rem auto;
-    padding: 20px; /* Padding original para centralizar */
+    padding: 20px; 
 }
 
 /* --- Contêiner para formulários dentro do app-layout --- */
@@ -593,7 +600,7 @@ body {
     border: 1px solid var(--input-color);
 }
 .details-card {
-    position: relative; /* Necessário para o ícone do chat */
+    position: relative; 
 }
 .details-card p {
     margin: 10px 0;
@@ -922,7 +929,7 @@ body {
     transition: all 0.3s ease;
 }
 
-/* --- NOVO: ESTILOS DO POPUP DE CHAT --- */
+/* --- ESTILOS DO POPUP DE CHAT --- */
 .chat-icon-button {
     position: absolute;
     top: 20px;
@@ -1069,6 +1076,91 @@ body {
     font-size: 0.9em;
 }
 
+/* --- NOVO: ESTILOS DE NOTIFICAÇÃO --- */
+.notification-bell {
+    position: relative;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+.notification-bell:hover {
+    opacity: 1;
+}
+.notification-bell svg {
+    width: 24px;
+    height: 24px;
+}
+
+.notification-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 10px;
+    height: 10px;
+    background-color: var(--status-closed-color); /* Vermelho */
+    border-radius: 50%;
+    border: 2px solid var(--card-color);
+    display: none; /* Escondido por padrão */
+}
+.notification-badge.show {
+    display: block;
+}
+
+.notification-panel {
+    display: none;
+    position: absolute;
+    top: 50px;
+    right: 0;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: var(--card-color);
+    border: 1px solid var(--input-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+}
+.notification-panel.show {
+    display: block;
+}
+.notification-panel h4 {
+    padding: 15px;
+    margin: 0;
+    border-bottom: 1px solid var(--input-color);
+}
+.notification-panel-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.notification-item {
+    padding: 15px;
+    border-bottom: 1px solid var(--input-color);
+    font-size: 0.9em;
+    line-height: 1.5;
+    opacity: 0.8;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.notification-item:hover {
+    background-color: var(--input-color);
+    opacity: 1;
+}
+.notification-item:last-child {
+    border-bottom: none;
+}
+.notification-item-vazio {
+    padding: 20px;
+    text-align: center;
+    opacity: 0.5;
+}
+
 
 /* ================================================== */
 /* --- RESPONSIVIDADE (TELAS MENORES) --- */
@@ -1157,5 +1249,10 @@ body {
         left: 10px;
         max-width: none;
     }
-
+    
+    /* --- Painel de Notificação no Mobile --- */
+    .notification-panel {
+        right: 10px;
+        width: 90%;
+    }
 }

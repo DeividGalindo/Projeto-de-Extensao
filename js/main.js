@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let filtroAreaAdmin = 'todos'; 
     let ticketIdParaAlocar = null;
 
+    // Listeners em tempo real para limpar depois
+    let unsubChat = null;
+    let unsubNotifications = null;
+
     function getTimestampAtual() {
         return firebase.firestore.FieldValue.serverTimestamp();
     }
@@ -124,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         document.body.insertAdjacentHTML('beforeend', modalAlocarHTML);
 
+        // --- INJETAR O HTML DO CHAT POPUP ---
         const chatPopupHTML = `
             <div class="chat-popup-window" id="chat-popup">
                 <div class="chat-popup-header">
@@ -236,10 +241,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     function injetaNavbar() {
-        const header = document.querySelector('.user-menu');
-        if (!header) {
-            return;
-        }
+        const container = document.querySelector('.header-user-actions');
+        if (!container) return;
         
         const user = auth.currentUser;
         const nomeUsuario = user ? (user.displayName || user.email) : 'Visitante';
@@ -247,26 +250,55 @@ document.addEventListener('DOMContentLoaded', function() {
         if (user) {
             localStorage.setItem('usuarioLogado', nomeUsuario);
         }
-        
-        const navbarHTML = `
-            <img src="img/icone_usuario.png" alt="Ícone do Usuário" class="user-icon">
-            <div class="dropdown-menu">
-                <span class="user-name">${nomeUsuario}</span>
-                <a href="#" class="logout-link">Logout</a>
+
+        // HTML do Sino de Notificação
+        const notificacaoHTML = `
+            <div class="notification-bell" id="notification-bell">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                </svg>
+                <span class="notification-badge" id="notification-badge"></span>
+            </div>
+            <div class="notification-panel" id="notification-panel">
+                <h4>Notificações</h4>
+                <ul class="notification-panel-list" id="notification-list">
+                    <li class="notification-item-vazio">Nenhuma notificação</li>
+                </ul>
             </div>
         `;
-        header.innerHTML = navbarHTML;
+
+        // HTML do Menu de Usuário
+        const userMenuHTML = `
+            <div class="user-menu">
+                <img src="img/icone_usuario.png" alt="Ícone do Usuário" class="user-icon">
+                <div class="dropdown-menu">
+                    <span class="user-name">${nomeUsuario}</span>
+                    <a href="#" class="logout-link">Logout</a>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = notificacaoHTML + userMenuHTML;
     }
 
     document.addEventListener('click', function(event) {
         const dropdownMenu = document.querySelector('.dropdown-menu');
-        if (!dropdownMenu || !dropdownMenu.classList.contains('active')) {
-            return;
+        if (dropdownMenu && dropdownMenu.classList.contains('active')) {
+            const isClickOnIcon = event.target.matches('.user-icon');
+            const isClickInsideMenu = dropdownMenu.contains(event.target);
+            if (!isClickOnIcon && !isClickInsideMenu) {
+                dropdownMenu.classList.remove('active');
+            }
         }
-        const isClickOnIcon = event.target.matches('.user-icon');
-        const isClickInsideMenu = dropdownMenu.contains(event.target);
-        if (!isClickOnIcon && !isClickInsideMenu) {
-            dropdownMenu.classList.remove('active');
+        
+        // --- LÓGICA DO PAINEL DE NOTIFICAÇÃO ---
+        const notificationPanel = document.getElementById('notification-panel');
+        if (notificationPanel && notificationPanel.classList.contains('show')) {
+            const isClickOnBell = event.target.closest('#notification-bell');
+            const isClickInsidePanel = notificationPanel.contains(event.target);
+            if (!isClickOnBell && !isClickInsidePanel) {
+                notificationPanel.classList.remove('show');
+            }
         }
     });
 
@@ -785,9 +817,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast("Erro ao carregar dados.", "error");
             });
     }
-
-    // --- LÓGICA DO CHAT MOVIDA PARA DENTRO DE initDetalhesPage ---
-    let unsubChat = null; 
     
     function initDetalhesPage() {
         const params = new URLSearchParams(window.location.search);
@@ -1177,6 +1206,67 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- NOVA FUNÇÃO DE NOTIFICAÇÃO ---
+    function initNotifications() {
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
+
+        const notificationBell = document.getElementById('notification-bell');
+        const notificationBadge = document.getElementById('notification-badge');
+        const notificationPanel = document.getElementById('notification-panel');
+        const notificationList = document.getElementById('notification-list');
+
+        if (!notificationBell || !notificationBadge || !notificationPanel || !notificationList) return;
+
+        // 1. Ouvir por novas notificações
+        unsubNotifications = db.collection('users').doc(currentUser.uid).collection('notificacoes')
+            .where('lida', '==', false)
+            .orderBy('timestamp', 'desc')
+            .onSnapshot((snapshot) => {
+                
+                if (snapshot.empty) {
+                    notificationBadge.classList.remove('show');
+                    notificationList.innerHTML = '<li class="notification-item-vazio">Nenhuma notificação</li>';
+                } else {
+                    notificationBadge.classList.add('show');
+                    notificationList.innerHTML = ''; // Limpa a lista
+                    
+                    snapshot.forEach(doc => {
+                        const notificacao = doc.data();
+                        const item = document.createElement('li');
+                        item.className = 'notification-item';
+                        item.dataset.id = doc.id; // ID da notificação
+                        item.dataset.ticketId = notificacao.ticketId; // ID do ticket para onde vai
+                        
+                        item.innerHTML = `<strong>${notificacao.autorNome}</strong> enviou uma nova mensagem no chamado <strong>#${notificacao.ticketNumero}</strong>`;
+                        notificationList.appendChild(item);
+                    });
+                }
+            });
+
+        // 2. Abrir o painel ao clicar no sino
+        notificationBell.addEventListener('click', () => {
+            notificationPanel.classList.toggle('show');
+        });
+
+        // 3. Marcar como lida e redirecionar ao clicar em um item
+        notificationList.addEventListener('click', (e) => {
+            const item = e.target.closest('.notification-item');
+            if (!item) return;
+
+            const notificacaoId = item.dataset.id;
+            const ticketId = item.dataset.ticketId;
+
+            // Marcar como lida no DB
+            db.collection('users').doc(currentUser.uid).collection('notificacoes').doc(notificacaoId).update({
+                lida: true
+            });
+
+            // Redirecionar
+            window.location.href = `detalhes-chamado.html?id=${ticketId}`;
+        });
+    }
+
 
     function bindGlobalNavigators() {
         document.body.addEventListener('click', function(event) {
@@ -1203,11 +1293,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target.matches('.logout-link')) {
                 event.preventDefault(); 
                 
-                // --- LIMPA O LISTENER DO CHAT AO SAIR ---
-                if (unsubChat) {
-                    unsubChat();
-                    unsubChat = null;
-                }
+                if (unsubChat) unsubChat();
+                if (unsubNotifications) unsubNotifications();
                 
                 auth.signOut().then(() => {
                     localStorage.removeItem('usuarioLogado'); 
@@ -1230,25 +1317,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (target.classList.contains('btn-ver-detalhes')) {
-                const ticketId = target.dataset.id;
-                window.location.href = `detalhes-chamado.html?id=${ticketId}`;
+                window.location.href = `detalhes-chamado.html?id=${target.dataset.id}`;
             }
 
             if (target.classList.contains('btn-editar-chamado')) {
-                 const ticketId = target.dataset.id;
-                 window.location.href = `editar-chamado.html?id=${ticketId}`;
+                 window.location.href = `editar-chamado.html?id=${target.dataset.id}`;
             }
 
             if (target.classList.contains('btn-alocar-chamado')) {
-                const ticketId = target.dataset.id;
-                showAlocarModal(ticketId);
+                showAlocarModal(target.dataset.id);
             }
 
             if (target.classList.contains('btn-excluir-chamado')) {
                 const ticketId = target.dataset.id;
-                
                 showConfirmModal("Tem certeza que deseja excluir este chamado? Esta ação não pode ser desfeita.", function() {
-                    
                     db.collection("chamados").doc(ticketId).delete()
                         .then(() => {
                             localStorage.removeItem('anexo_' + ticketId);
@@ -1264,11 +1346,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = target.id;
             if (id === 'btn-voltar-painel' || id === 'btn-ir-painel' || id === 'btn-retornar-painel' || id === 'btn-voltar-dashboard') {
                 
-                // --- LIMPA O LISTENER DO CHAT AO VOLTAR ---
-                if (unsubChat) {
-                    unsubChat();
-                    unsubChat = null;
-                }
+                if (unsubChat) unsubChat(); // Limpa o listener do chat ao sair da página
                 
                 const userRole = localStorage.getItem('usuarioRole');
                 if (userRole === 'admin' || userRole === 'suporte') {
@@ -1282,7 +1360,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 closeAlocarModal();
             }
 
-            // --- NOVOS EVENTOS PARA O POPUP DE CHAT ---
             if (target.closest('#btn-open-chat-popup')) {
                 document.getElementById('chat-popup').classList.add('show');
             }
@@ -1405,6 +1482,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (onAppPage) {
                 injetaNavbar(); 
                 bindGlobalNavigators(); 
+                initNotifications(); // INICIA O LISTENER DE NOTIFICAÇÕES
 
                 const linkGerenciar = document.getElementById('link-gerenciar-usuarios');
                 if (linkGerenciar) {
