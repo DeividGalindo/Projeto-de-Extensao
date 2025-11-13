@@ -124,7 +124,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         document.body.insertAdjacentHTML('beforeend', modalAlocarHTML);
 
-        // --- NOVO: INJETAR O HTML DO CHAT POPUP ---
         const chatPopupHTML = `
             <div class="chat-popup-window" id="chat-popup">
                 <div class="chat-popup-header">
@@ -788,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- LÓGICA DO CHAT MOVIDA PARA DENTRO DE initDetalhesPage ---
-    let unsubChat = null; // Variável para guardar o listener e poder removê-lo
+    let unsubChat = null; 
     
     function initDetalhesPage() {
         const params = new URLSearchParams(window.location.search);
@@ -805,12 +804,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (chatMessagesContainer && chatForm && currentUser) {
             const chatRef = db.collection('chamados').doc(ticketId).collection('chat');
 
-            // 1. Ouvir por novas mensagens
-            // Usamos .onSnapshot para ouvir em tempo real
+            if (unsubChat) {
+                unsubChat();
+            }
+
             unsubChat = chatRef.orderBy("timestamp", "asc")
                 .onSnapshot((querySnapshot) => {
                     
-                    chatMessagesContainer.innerHTML = ''; // Limpa o chat
+                    chatMessagesContainer.innerHTML = ''; 
                     
                     if (querySnapshot.empty) {
                         chatMessagesContainer.innerHTML = '<p style="text-align: center; opacity: 0.5;">Nenhuma mensagem ainda.</p>';
@@ -840,11 +841,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
                 });
 
-            // 2. Enviar mensagem
-            // Clonamos o nó e o substituímos para evitar listeners duplicados
             const newChatForm = chatForm.cloneNode(true);
             chatForm.parentNode.replaceChild(newChatForm, chatForm);
-            const newChatInput = document.getElementById('chat-input'); // Re-seleciona o input
+            const newChatInput = document.getElementById('chat-input'); 
 
             newChatForm.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -1204,6 +1203,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target.matches('.logout-link')) {
                 event.preventDefault(); 
                 
+                // --- LIMPA O LISTENER DO CHAT AO SAIR ---
+                if (unsubChat) {
+                    unsubChat();
+                    unsubChat = null;
+                }
+                
                 auth.signOut().then(() => {
                     localStorage.removeItem('usuarioLogado'); 
                     localStorage.removeItem('usuarioRole');
@@ -1258,6 +1263,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const id = target.id;
             if (id === 'btn-voltar-painel' || id === 'btn-ir-painel' || id === 'btn-retornar-painel' || id === 'btn-voltar-dashboard') {
+                
+                // --- LIMPA O LISTENER DO CHAT AO VOLTAR ---
+                if (unsubChat) {
+                    unsubChat();
+                    unsubChat = null;
+                }
+                
                 const userRole = localStorage.getItem('usuarioRole');
                 if (userRole === 'admin' || userRole === 'suporte') {
                      window.location.href = 'dashboard-admin.html';

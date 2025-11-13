@@ -572,7 +572,7 @@ body {
 .details-container {
     max-width: 800px;
     margin: 2rem auto;
-    padding: 20px 40px; 
+    padding: 20px; /* Padding original para centralizar */
 }
 
 /* --- Contêiner para formulários dentro do app-layout --- */
@@ -591,6 +591,9 @@ body {
     border-radius: var(--border-radius);
     margin-bottom: 20px;
     border: 1px solid var(--input-color);
+}
+.details-card {
+    position: relative; /* Necessário para o ícone do chat */
 }
 .details-card p {
     margin: 10px 0;
