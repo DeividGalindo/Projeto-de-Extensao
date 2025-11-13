@@ -14,43 +14,38 @@
     <div class="app-layout">
         
         <aside class="app-sidebar">
-    <div class="logo">Service<span>Desk</span></div>
-    <nav class="sidebar-menu">
-        <h3>Admin</h3>
-        <ul>
-            <li id="link-gerenciar-usuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
-        </ul>
+            <div class="logo">Service<span>Desk</span></div>
+            <nav class="sidebar-menu">
+                <h3>Admin</h3>
+                <ul>
+                    <li id="link-gerenciar-usuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                </ul>
 
-        <h3>Tickets</h3>
-        <ul>
-            <li><a href="#" id="btn-voltar-dashboard"> &larr; Voltar ao Painel</a></li>
-        </ul>
-    </nav>
-</aside>
+                <h3>Tickets</h3>
+                <ul>
+                    <li><a href="#" id="btn-voltar-dashboard"> &larr; Voltar ao Painel</a></li>
+                </ul>
+            </nav>
+        </aside>
 
         <main class="app-main-content">
             
             <header class="page-header">
                 <button class="btn-menu-mobile" id="btn-menu-mobile">
-                     <span></span>
-                     <span></span>
-                     <span></span>
-                 </button>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div style="width: 40px; flex-shrink: 0;"></div>
 
-                 <h1 style="flex-grow: 1; text-align: center;">Abrir Novo Chamado</h1> 
-                 <div class="header-user-actions">
-                 <div class="user-menu"></div> 
-                 </div>
+                <h1 style="flex-grow: 1; text-align: center;">Abrir Novo Chamado</h1>
+
+                <div class="header-user-actions">
+                    <div class="user-menu"></div> 
+                </div>
             </header>
 
-    <h1 style="flex-grow: 1; text-align: center;">Abrir Novo Chamado</h1> 
-    <div class="header-user-actions">
-        <div class="user-menu"></div> 
-    </div>
-            </header>
-
-            <div class="form-container">
-                <div class="card">
+            <div class="form-container"> <div class="card">
                     <form id="form-abrir-chamado">
                         <div class="input-group">
                             <label for="titulo">Título</label>
@@ -83,9 +78,7 @@
                         <button type="button" class="btn btn-secondary" id="btn-voltar-painel" style="max-width: 250px; margin-left: 10px;">Cancelar</button>
                     </form>
                 </div>
-            </div>
-
-        </main>
+            </div> </main>
     </div>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
