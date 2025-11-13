@@ -3,21 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel do Gestor - ServiceDesk App</title>
+    <title>Painel do Administrador - ServiceDesk App</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-
     <div class="app-layout">
         
         <aside class="app-sidebar">
             <div class="logo">Service<span>Desk</span></div>
             <nav class="sidebar-menu">
-                <h3>Admin</h3>
-                <ul>
+                <h3 id="admin-menu-header" style="display: none;">Admin</h3>
+                <ul id="admin-menu-list" style="display: none;">
                     <li><a href="dashboard-admin.html" class="active">Painel Principal</a></li>
                     <li id="link-gerenciar-usuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
                 </ul>
@@ -36,9 +35,7 @@
                     <span></span>
                     <span></span>
                 </button>
-
                 <h1>Painel de Controle</h1>
-                
                 <div class="header-user-actions">
                     <div class="user-menu"></div> 
                 </div>
