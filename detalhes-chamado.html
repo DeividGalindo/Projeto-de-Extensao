@@ -9,39 +9,38 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
-<body>
-
-    <div class="app-layout">
-        
-        <aside class="app-sidebar">
-            <div class="logo">Service<span>Desk</span></div>
-            <nav class="sidebar-menu">
-                <h3>Admin</h3>
-                <ul>
-                    <li id="link-gerenciar-usuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
-                </ul>
-
-                <h3>Tickets</h3>
-                <ul>
-                    <li><a href="#" id="btn-voltar-dashboard"> &larr; Voltar ao Painel</a></li>
-                </ul>
-            </nav>
-        </aside>
-
-        <main class="app-main-content">
+    <body>
+        <div class="app-layout">
             
-            <header class="page-header">
-                <button class="btn-menu-mobile" id="btn-menu-mobile">
-                     <span></span>
-                     <span></span>
-                     <span></span>
-                 </button>
-
-                 <h1 style="flex-grow: 1; text-align: center;">Abrir Novo Chamado</h1> 
-                 <div class="header-user-actions">
-                 <div class="user-menu"></div> 
-                 </div>
-            </header>
+            <aside class="app-sidebar">
+                <div class="logo">Service<span>Desk</span></div>
+                <nav class="sidebar-menu">
+                    <h3 id="admin-menu-header" style="display: none;">Admin</h3>
+                    <ul id="admin-menu-list" style="display: none;">
+                        <li><a href="dashboard-admin.html">Painel Principal</a></li>
+                        <li id="link-gerenciar-usuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                    </ul>
+                    <h3>Tickets</h3>
+                    <ul>
+                        <li><a href="#" id="btn-voltar-dashboard"> &larr; Voltar ao Painel</a></li>
+                    </ul>
+                </nav>
+            </aside>
+    
+            <main class="app-main-content">
+                
+                <header class="page-header">
+                    <button class="btn-menu-mobile" id="btn-menu-mobile">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <div style="width: 40px; flex-shrink: 0;"></div>
+                    <h1 style="flex-grow: 1; text-align: center;">Detalhes do Chamado</h1>
+                    <div class="header-user-actions">
+                        <div class="user-menu"></div> 
+                    </div>
+                </header>
 
     <h1 style="flex-grow: 1; text-align: center;">Abrir Novo Chamado</h1> 
     <div class="header-user-actions">
