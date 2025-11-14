@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const modalAlocarHTML = `
             <div id="alocar-modal-overlay">
                 <div class="modal-box">
-                    <h3 id="alocar-modal-title">Alocar Chamado</h3>
+                    <h3 id="alocar-modal-title">Status do Chamado</h3>
                     <form id="form-alocar-chamado">
                         
                         <div class="input-group">
@@ -211,7 +211,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             ticketIdParaAlocar = ticketId;
             
-            document.getElementById('alocar-modal-title').textContent = `Alocar Chamado #${chamado.numeroChamado || ticketId.substring(0,6)}`;
+            // --- TÍTULO DO MODAL ATUALIZADO ---
+            document.getElementById('alocar-modal-title').textContent = "Status do Chamado";
             document.getElementById('alocar-categoria').value = chamado.categoria || 'outros';
             document.getElementById('alocar-status').value = chamado.status || 'Aberto';
 
@@ -941,74 +942,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const commentFormCard = document.querySelector('.comment-form-card');
-            const adminControls = document.getElementById('admin-ticket-controls');
+            const adminControls = document.getElementById('admin-ticket-controls'); // Este é o card que estava oculto
+            const gearButton = document.getElementById('btn-open-alocar-popup');
             
             const userRole = localStorage.getItem('usuarioRole');
+            
             if (userRole === 'admin' || userRole === 'suporte') {
-                if (commentFormCard) commentFormCard.style.display = 'block';
-                if (adminControls) adminControls.style.display = 'block';
-                
-                if (adminControls && !adminControls.hasChildNodes()) {
-                    const departamentos = window.appData.departamentos;
-                    const statusList = ["Aberto", "Em Progresso", "Fechado"];
-                    const prioridadeList = ["Baixa", "Média", "Alta", "Não definida"];
-                    const categoriaList = ["hardware", "software", "rede", "outros"]; 
-
-                    let categoriaOptionsHTML = '';
-                    categoriaList.forEach(cat => {
-                        const isSelected = chamado.categoria === cat ? 'selected' : '';
-                        categoriaOptionsHTML += `<option value="${cat}">${cat}</option>`;
-                    });
-
-                    let deptoOptionsHTML = '<option value="null">Nenhum</option>';
-                    departamentos.forEach(depto => {
-                        const isSelected = chamado.departamento === depto ? 'selected' : '';
-                        deptoOptionsHTML += `<option value="${depto}" ${isSelected}>${depto}</option>`;
-                    });
-
-                    let statusOptionsHTML = '';
-                    statusList.forEach(status => {
-                        const isSelected = chamado.status === status ? 'selected' : '';
-                        statusOptionsHTML += `<option value="${status}" ${isSelected}>${status}</option>`;
-                    });
-
-                    let prioridadeOptionsHTML = '';
-                    prioridadeList.forEach(prioridade => {
-                        const isSelected = chamado.prioridade === prioridade ? 'selected' : '';
-                        prioridadeOptionsHTML += `<option value="${prioridade}" ${isSelected}>${prioridade}</option>`;
-                    });
-
-                    adminControls.innerHTML = `
-                        <h3>Controles do Administrador</h3>
-                        <div class="assignment-controls">
-                            <div>
-                                <label for="categoria-admin">Mudar Categoria:</label>
-                                <select id="categoria-admin" class="admin-select">${categoriaOptionsHTML}</select>
-                            </div>
-                            <div>
-                                <label for="depto-admin">Designar para:</label>
-                                <select id="depto-admin" class="admin-select">${deptoOptionsHTML}</select>
-                            </div>
-                            <div>
-                                <label for="status-admin">Mudar Status:</label>
-                                <select id="status-admin" class="admin-select">${statusOptionsHTML}</select>
-                            </div>
-                            <div>
-                                <label for="prioridade-admin">Mudar Prioridade:</label>
-                                <select id="prioridade-admin" class="admin-select">${prioridadeOptionsHTML}</select>
-                            </div>
-                        </div>
-                    `;
-
-                    document.getElementById('categoria-admin').addEventListener('change', (e) => salvarAlteracao(ticketId, 'categoria', e.target.value, 'Categoria'));
-                    document.getElementById('depto-admin').addEventListener('change', (e) => salvarAlteracao(ticketId, 'departamento', e.target.value, 'Departamento'));
-                    document.getElementById('status-admin').addEventListener('change', (e) => salvarAlteracao(ticketId, 'status', e.target.value, 'Status'));
-                    document.getElementById('prioridade-admin').addEventListener('change', (e) => salvarAlteracao(ticketId, 'prioridade', e.target.value, 'Prioridade'));
+                if (commentFormCard) commentFormCard.style.display = 'block'; // Mostra o form de adicionar comentário
+                if (adminControls) adminControls.style.display = 'none'; // Mantém os dropdowns ocultos
+                if (gearButton) {
+                    gearButton.style.display = 'flex'; // Mostra o ícone de engrenagem
+                    gearButton.dataset.id = ticketId; // Adiciona o ID para o clique
                 }
 
-            } else {
-                if (commentFormCard) commentFormCard.style.display = 'block';
+            } else { // É um solicitante
+                if (commentFormCard) commentFormCard.style.display = 'block'; // Mostra o form de adicionar comentário
                 if (adminControls) adminControls.style.display = 'none';
+                if (gearButton) gearButton.style.display = 'none';
             }
 
         }, (error) => {
@@ -1115,21 +1065,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     
         db.collection("users").get().then((querySnapshot) => {
-            usuariosCache = []; // Limpa e preenche o cache
+            usuariosCache = []; 
             querySnapshot.forEach((doc) => {
                 const user = doc.data();
                 if (user.role !== 'admin') {
                     usuariosCache.push(user);
                 }
             });
-            renderGerenciarUsuariosList(); // Renderiza a lista inicial
+            renderGerenciarUsuariosList(); 
         });
 
-        // Adiciona o listener para a busca
         searchInput.addEventListener('keyup', renderGerenciarUsuariosList);
     }
 
-    // --- NOVA FUNÇÃO DE RENDERIZAÇÃO PARA GERENCIAR USUÁRIOS ---
     function renderGerenciarUsuariosList() {
         const container = document.getElementById('user-list-container');
         const searchInput = document.getElementById('campo-busca-usuarios');
@@ -1137,14 +1085,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const searchTerm = searchInput.value.toLowerCase();
 
-        // Filtra o cache
         const usuariosFiltrados = usuariosCache.filter(user => {
             const nome = user.nomeCompleto ? user.nomeCompleto.toLowerCase() : '';
             const email = user.email ? user.email.toLowerCase() : '';
             return nome.includes(searchTerm) || email.includes(searchTerm);
         });
 
-        container.innerHTML = ''; // Limpa a lista atual
+        container.innerHTML = ''; 
 
         if (usuariosFiltrados.length === 0) {
             container.innerHTML = '<p>Nenhum usuário encontrado.</p>';
@@ -1179,12 +1126,10 @@ document.addEventListener('DOMContentLoaded', function() {
             container.appendChild(card);
         });
 
-        // Re-anexa os listeners para os <select>s
         attachRoleSelectListeners();
         attachAreaSelectListeners();
     }
 
-    // --- NOVAS FUNÇÕES HELPER PARA LISTENERS ---
     function attachRoleSelectListeners() {
         document.querySelectorAll('.user-role-select').forEach(select => {
             select.addEventListener('change', (event) => {
@@ -1248,7 +1193,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.preventDefault(); 
                 
                 if (unsubChat) unsubChat();
-                // if (unsubNotifications) unsubNotifications(); // Removido
+                if (unsubNotifications) unsubNotifications();
                 
                 auth.signOut().then(() => {
                     localStorage.removeItem('usuarioLogado'); 
@@ -1278,8 +1223,9 @@ document.addEventListener('DOMContentLoaded', function() {
                  window.location.href = `editar-chamado.html?id=${target.dataset.id}`;
             }
 
-            if (target.classList.contains('btn-alocar-chamado')) {
-                showAlocarModal(target.dataset.id);
+            if (target.classList.contains('btn-alocar-chamado') || target.closest('.btn-alocar-chamado')) {
+                const button = target.closest('.btn-alocar-chamado');
+                showAlocarModal(button.dataset.id);
             }
 
             if (target.classList.contains('btn-excluir-chamado')) {
@@ -1436,7 +1382,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (onAppPage) {
                 injetaNavbar(); 
                 bindGlobalNavigators(); 
-                // initNotifications(); // Removido
 
                 const linkGerenciar = document.getElementById('link-gerenciar-usuarios');
                 if (linkGerenciar) {
