@@ -277,6 +277,13 @@ body {
     font-size: 2em;
 }
 
+/* Container para Ações do Usuário no Header */
+.header-user-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 /* Ícone de Usuário (Header) */
 .user-menu {
     position: relative;
@@ -572,7 +579,7 @@ body {
 .details-container {
     max-width: 800px;
     margin: 2rem auto;
-    padding: 20px 40px; 
+    padding: 20px; 
 }
 
 /* --- Contêiner para formulários dentro do app-layout --- */
@@ -926,7 +933,7 @@ body {
 .chat-icon-button {
     position: absolute;
     top: 20px;
-    right: 20px;
+    right: 20px; /* Posição do ícone de chat */
     background: var(--input-color);
     color: var(--primary-accent-color);
     border: none;
@@ -940,6 +947,7 @@ body {
     transition: background-color 0.3s ease;
     padding: 0;
     margin: 0;
+    z-index: 2; /* Para ficar acima do h3 */
 }
 .chat-icon-button:hover {
     background-color: #444;
@@ -948,6 +956,37 @@ body {
     width: 24px;
     height: 24px;
 }
+
+/* Ícone de Engrenagem (Alocar) */
+.gear-icon-button {
+    position: absolute;
+    top: 20px;
+    right: 74px; /* Posição ao lado do ícone de chat (20px + 44px + 10px) */
+    background: var(--input-color);
+    color: var(--text-color); /* Cor normal */
+    opacity: 0.7;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    padding: 0;
+    margin: 0;
+    z-index: 2;
+}
+.gear-icon-button:hover {
+    background-color: #444;
+    opacity: 1;
+}
+.gear-icon-button svg {
+    width: 24px;
+    height: 24px;
+}
+
 
 .chat-popup-window {
     position: fixed;
@@ -1067,6 +1106,7 @@ body {
     padding: 10px 20px;
     font-size: 0.9em;
 }
+
 
 /* ================================================== */
 /* --- RESPONSIVIDADE (TELAS MENORES) --- */
