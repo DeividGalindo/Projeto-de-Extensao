@@ -277,7 +277,7 @@ body {
     font-size: 2em;
 }
 
-/* --- NOVO: Container para Ações do Usuário no Header --- */
+/* Container para Ações do Usuário no Header */
 .header-user-actions {
     display: flex;
     align-items: center;
@@ -381,7 +381,7 @@ body {
     padding: 1.5rem;
     border-radius: var(--border-radius);
     border: 1px solid var(--input-color);
-    overflow-x: auto; 
+    overflow-x: auto; /* <-- ADICIONADO PARA ROLAGEM HORIZONTAL */
 }
 
 .tickets-table-header {
@@ -400,7 +400,7 @@ body {
     display: flex;
     justify-content: space-between;
     margin-bottom: 1rem;
-    min-width: 900px; 
+    min-width: 900px; /* <-- CORRIGIDO: Garante que os controles rolem com a tabela */
 }
 
 .filter-container {
@@ -455,7 +455,7 @@ body {
     font-weight: 600;
     opacity: 0.7;
     font-size: 0.9em;
-    min-width: 900px; 
+    min-width: 900px; /* <-- CORRIGIDO: Garante que o cabeçalho role */
 }
 
 .ticket-row.header .status,
@@ -472,7 +472,7 @@ body {
     border-radius: var(--border-radius);
     margin-bottom: 10px;
     transition: background-color 0.3s ease;
-    min-width: 900px; 
+    min-width: 900px; /* <-- CORRIGIDO: Garante que a linha role */
 }
 .ticket-row:hover {
     background-color: var(--input-color);
@@ -491,32 +491,32 @@ body {
 
 /* --- LARGURAS DE COLUNA CORRIGIDAS --- */
 .ticket-cell.id {
-    width: 8%;
+    width: 14%;
     flex-shrink: 0;
 }
 .ticket-cell.titulo {
-    width: 24%;
+    width: 14%;
     font-weight: 600;
     flex-shrink: 0;
 }
 .ticket-cell.categoria {
-    width: 12%;
+    width: 14%;
     opacity: 0.8;
     text-transform: capitalize;
     flex-shrink: 0;
 }
 .ticket-cell.autor {
-    width: 16%;
+    width: 14%;
     opacity: 0.8;
     flex-shrink: 0;
 }
 .ticket-cell.data {
-    width: 15%;
+    width: 14%;
     opacity: 0.8;
     flex-shrink: 0;
 }
 .ticket-cell.status {
-    width: 8%;
+    width: 14%;
     text-align: center; 
     flex-shrink: 0;
 }
@@ -971,7 +971,6 @@ body {
     display: flex;
     flex-direction: column;
     
-    /* Escondido por padrão */
     opacity: 0;
     transform: translateY(20px);
     pointer-events: none;
@@ -1011,7 +1010,7 @@ body {
 
 .chat-messages {
     width: 100%;
-    flex-grow: 1; /* Ocupa o espaço disponível */
+    flex-grow: 1; 
     background-color: var(--bg-color);
     padding: 15px;
     overflow-y: auto;
@@ -1076,160 +1075,61 @@ body {
     font-size: 0.9em;
 }
 
-/* --- NOVO: ESTILOS DE NOTIFICAÇÃO --- */
-.notification-bell {
-    position: relative;
-    cursor: pointer;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-color);
-    opacity: 0.8;
-    transition: opacity 0.3s ease;
-}
-.notification-bell:hover {
-    opacity: 1;
-}
-.notification-bell svg {
-    width: 24px;
-    height: 24px;
-}
-
-.notification-badge {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 10px;
-    height: 10px;
-    background-color: var(--status-closed-color); /* Vermelho */
-    border-radius: 50%;
-    border: 2px solid var(--card-color);
-    display: none; /* Escondido por padrão */
-}
-.notification-badge.show {
-    display: block;
-}
-
-.notification-panel {
-    display: none;
-    position: absolute;
-    top: 50px;
-    right: 0;
-    width: 300px;
-    max-height: 400px;
-    overflow-y: auto;
-    background-color: var(--card-color);
-    border: 1px solid var(--input-color);
-    border-radius: var(--border-radius);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    z-index: 100;
-}
-.notification-panel.show {
-    display: block;
-}
-.notification-panel h4 {
-    padding: 15px;
-    margin: 0;
-    border-bottom: 1px solid var(--input-color);
-}
-.notification-panel-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-.notification-item {
-    padding: 15px;
-    border-bottom: 1px solid var(--input-color);
-    font-size: 0.9em;
-    line-height: 1.5;
-    opacity: 0.8;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-.notification-item:hover {
-    background-color: var(--input-color);
-    opacity: 1;
-}
-.notification-item:last-child {
-    border-bottom: none;
-}
-.notification-item-vazio {
-    padding: 20px;
-    text-align: center;
-    opacity: 0.5;
-}
-
-
 /* ================================================== */
 /* --- RESPONSIVIDADE (TELAS MENORES) --- */
 /* ================================================== */
 
 @media (max-width: 768px) {
 
-    /* --- Mostra o botão de menu --- */
-    .btn-menu-mobile {
-        display: flex;
-    }
-
-    /* --- Esconde a Sidebar e prepara para animação --- */
     .app-sidebar {
-        transform: translateX(-100%); /* Começa fora da tela */
+        transform: translateX(-100%); 
         position: fixed;
-        z-index: 1000; /* Fica acima do conteúdo */
+        z-index: 1000; 
     }
 
-    /* --- Classe ativa para mostrar a sidebar no mobile --- */
     body.sidebar-mobile-active .app-sidebar {
-        transform: translateX(0); /* Puxa para dentro da tela */
+        transform: translateX(0); 
     }
 
-    /* --- Conteúdo Principal ocupa 100% --- */
     .app-main-content {
         margin-left: 0;
-        padding: 1.5rem; /* Padding menor em telas pequenas */
+        padding: 1.5rem; 
     }
 
-    /* --- Cabeçalho --- */
     .page-header h1 {
-        font-size: 1.5em; /* Título menor */
+        font-size: 1.5em; 
         text-align: left; 
         flex-grow: 1;
     }
     
     .page-header {
         justify-content: space-between;
-        gap: 15px; /* Adiciona espaço entre o botão e o título */
+        gap: 15px; 
     }
 
-    /* --- Cards de Stats --- */
     .stats-container {
-        grid-template-columns: 1fr; /* 1 coluna */
+        grid-template-columns: 1fr; 
         gap: 15px;
     }
 
-    /* --- Tabela --- */
     .table-controls {
         flex-direction: column;
         gap: 15px;
-        min-width: 0; /* Permite que os controles quebrem a linha */
+        min-width: 0; 
     }
     .search-container {
         width: 100%;
     }
 
-    /* --- Formulários --- */
     .form-container {
-        max-width: 100%; /* Ocupa 100% no mobile */
+        max-width: 100%; 
     }
     .form-container .card {
-        padding: 20px; /* Padding normal no mobile */
+        padding: 20px; 
     }
 
-    /* --- Página de Detalhes --- */
     .details-container {
-        padding: 0; /* Remove padding lateral no mobile */
+        padding: 0; 
     }
     .page-header-full {
         padding: 15px;
@@ -1241,7 +1141,6 @@ body {
         text-align: center;
     }
 
-    /* --- Chat Popup no Mobile --- */
     .chat-popup-window {
         bottom: 10px;
         right: 10px;
@@ -1250,9 +1149,4 @@ body {
         max-width: none;
     }
     
-    /* --- Painel de Notificação no Mobile --- */
-    .notification-panel {
-        right: 10px;
-        width: 90%;
-    }
 }
