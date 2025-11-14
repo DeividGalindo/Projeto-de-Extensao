@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let filtroAreaAdmin = 'todos'; 
     let ticketIdParaAlocar = null;
 
-    // Listeners em tempo real para limpar depois
     let unsubChat = null;
     let unsubNotifications = null;
 
@@ -128,7 +127,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         document.body.insertAdjacentHTML('beforeend', modalAlocarHTML);
 
-        // --- INJETAR O HTML DO CHAT POPUP ---
         const chatPopupHTML = `
             <div class="chat-popup-window" id="chat-popup">
                 <div class="chat-popup-header">
@@ -291,7 +289,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // --- LÓGICA DO PAINEL DE NOTIFICAÇÃO ---
         const notificationPanel = document.getElementById('notification-panel');
         if (notificationPanel && notificationPanel.classList.contains('show')) {
             const isClickOnBell = event.target.closest('#notification-bell');
@@ -346,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const userArea = userData.area || null;
                         
                         localStorage.setItem('usuarioRole', userRole);
-                        localStorage.setItem('usuarioArea', userArea);
+                        localStorage.setItem('usuarioArea', userArea || "null"); // Salva 'null' como string
 
                         if (userRole === 'admin' || userRole === 'suporte') {
                             window.location.href = 'dashboard-admin.html';
@@ -817,87 +814,96 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast("Erro ao carregar dados.", "error");
             });
     }
-    
-    function initDetalhesPage() {
-        const params = new URLSearchParams(window.location.search);
-        const ticketId = params.get('id');
-        if (!ticketId) return; 
 
-        // --- INÍCIO DA LÓGICA DO CHAT POPUP ---
-        
+    // --- NOVA FUNÇÃO DE CHAT POPUP ---
+    function initChatPopup(ticketId, ticketNumero, solicitanteUid) {
         const chatMessagesContainer = document.getElementById('popup-chat-messages');
         const chatForm = document.getElementById('form-chat');
         const chatInput = document.getElementById('chat-input');
         const currentUser = auth.currentUser;
+        const userRole = localStorage.getItem('usuarioRole');
+        const userArea = localStorage.getItem('usuarioArea');
 
-        if (chatMessagesContainer && chatForm && currentUser) {
-            const chatRef = db.collection('chamados').doc(ticketId).collection('chat');
+        if (!chatMessagesContainer || !chatForm || !currentUser) return;
 
-            if (unsubChat) {
-                unsubChat();
-            }
+        const chatRef = db.collection('chamados').doc(ticketId).collection('chat');
 
-            unsubChat = chatRef.orderBy("timestamp", "asc")
-                .onSnapshot((querySnapshot) => {
+        if (unsubChat) {
+            unsubChat(); // Limpa o listener anterior
+        }
+
+        unsubChat = chatRef.orderBy("timestamp", "asc")
+            .onSnapshot((querySnapshot) => {
+                
+                chatMessagesContainer.innerHTML = ''; 
+                
+                if (querySnapshot.empty) {
+                    chatMessagesContainer.innerHTML = '<p style="text-align: center; opacity: 0.5;">Nenhuma mensagem ainda.</p>';
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const msg = doc.data();
                     
-                    chatMessagesContainer.innerHTML = ''; 
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = 'chat-message';
                     
-                    if (querySnapshot.empty) {
-                        chatMessagesContainer.innerHTML = '<p style="text-align: center; opacity: 0.5;">Nenhuma mensagem ainda.</p>';
-                        return;
+                    if (msg.autorUid === currentUser.uid) {
+                        msgDiv.classList.add('autor-eu');
+                    } else {
+                        msgDiv.classList.add('autor-outro');
                     }
 
-                    querySnapshot.forEach((doc) => {
-                        const msg = doc.data();
-                        
-                        const msgDiv = document.createElement('div');
-                        msgDiv.className = 'chat-message';
-                        
-                        if (msg.autorUid === currentUser.uid) {
-                            msgDiv.classList.add('autor-eu');
-                        } else {
-                            msgDiv.classList.add('autor-outro');
-                        }
-
-                        msgDiv.innerHTML = `
-                            <span class="autor">${msg.autorNome} (${formatarTimestamp(msg.timestamp, 'chat')})</span>
-                            ${msg.texto}
-                        `;
-                        
-                        chatMessagesContainer.appendChild(msgDiv);
-                    });
-
-                    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                    msgDiv.innerHTML = `
+                        <span class="autor">${msg.autorNome} (${formatarTimestamp(msg.timestamp, 'chat')})</span>
+                        ${msg.texto}
+                    `;
+                    
+                    chatMessagesContainer.appendChild(msgDiv);
                 });
 
-            const newChatForm = chatForm.cloneNode(true);
-            chatForm.parentNode.replaceChild(newChatForm, chatForm);
-            const newChatInput = document.getElementById('chat-input'); 
-
-            newChatForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const texto = newChatInput.value.trim();
-                if (texto === "") return;
-
-                const novaMensagem = {
-                    texto: texto,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    autorUid: currentUser.uid,
-                    autorNome: currentUser.displayName || currentUser.email
-                };
-
-                chatRef.add(novaMensagem)
-                    .then(() => {
-                        newChatInput.value = ''; 
-                    })
-                    .catch(err => {
-                        console.error("Erro ao enviar mensagem: ", err);
-                        showToast("Não foi possível enviar a mensagem.", "error");
-                    });
+                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
             });
-        }
-        // --- FIM DA LÓGICA DO CHAT POPUP ---
 
+        const newChatForm = chatForm.cloneNode(true);
+        chatForm.parentNode.replaceChild(newChatForm, chatForm);
+        const newChatInput = document.getElementById('chat-input'); 
+
+        newChatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const texto = newChatInput.value.trim();
+            if (texto === "") return;
+
+            const novaMensagem = {
+                texto: texto,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                autorUid: currentUser.uid,
+                autorNome: currentUser.displayName || currentUser.email,
+                autorRole: userRole 
+            };
+
+            chatRef.add(novaMensagem)
+                .then(() => {
+                    newChatInput.value = ''; 
+                    // --- GATILHO DE NOTIFICAÇÃO ---
+                    // Se eu não for o solicitante (ou seja, sou admin/suporte), notifique o solicitante
+                    if (currentUser.uid !== solicitanteUid) {
+                        criarNotificacao(solicitanteUid, ticketId, ticketNumero, "Nova mensagem do suporte");
+                    }
+                    // TODO: Notificar o(s) admin(s)/suporte(s) se o solicitante enviar
+                })
+                .catch(err => {
+                    console.error("Erro ao enviar mensagem: ", err);
+                    showToast("Não foi possível enviar a mensagem.", "error");
+                });
+        });
+    }
+
+
+    function initDetalhesPage() {
+        const params = new URLSearchParams(window.location.search);
+        const ticketId = params.get('id');
+        if (!ticketId) return; 
 
         const docRef = db.collection("chamados").doc(ticketId);
         const historyList = document.getElementById('detalhes-historico');
@@ -937,6 +943,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             const chamado = doc.data();
+
+            // --- INICIA O CHAT COM OS DADOS DO CHAMADO ---
+            initChatPopup(ticketId, chamado.numeroChamado, chamado.userId);
 
             document.getElementById('detalhes-titulo').textContent = `Chamado #${chamado.numeroChamado || doc.id.substring(0,6)} - ${chamado.titulo}`;
             document.getElementById('detalhes-status').textContent = chamado.status;
@@ -1206,7 +1215,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- NOVA FUNÇÃO DE NOTIFICAÇÃO ---
+    // --- NOVA FUNÇÃO PARA CRIAR NOTIFICAÇÕES ---
+    function criarNotificacao(uidDestinatario, ticketId, ticketNumero, autorNome) {
+        const notificacaoRef = db.collection('users').doc(uidDestinatario).collection('notificacoes');
+        
+        const novaNotificacao = {
+            ticketId: ticketId,
+            ticketNumero: ticketNumero,
+            autorNome: autorNome,
+            lida: false,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        notificacaoRef.add(novaNotificacao)
+            .then(() => console.log("Notificação criada para", uidDestinatario))
+            .catch(err => console.error("Erro ao criar notificação:", err));
+    }
+
+
     function initNotifications() {
         const currentUser = auth.currentUser;
         if (!currentUser) return;
@@ -1218,7 +1244,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!notificationBell || !notificationBadge || !notificationPanel || !notificationList) return;
 
-        // 1. Ouvir por novas notificações
+        if (unsubNotifications) {
+            unsubNotifications();
+        }
+
         unsubNotifications = db.collection('users').doc(currentUser.uid).collection('notificacoes')
             .where('lida', '==', false)
             .orderBy('timestamp', 'desc')
@@ -1229,27 +1258,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     notificationList.innerHTML = '<li class="notification-item-vazio">Nenhuma notificação</li>';
                 } else {
                     notificationBadge.classList.add('show');
-                    notificationList.innerHTML = ''; // Limpa a lista
+                    notificationList.innerHTML = ''; 
                     
                     snapshot.forEach(doc => {
                         const notificacao = doc.data();
                         const item = document.createElement('li');
                         item.className = 'notification-item';
-                        item.dataset.id = doc.id; // ID da notificação
-                        item.dataset.ticketId = notificacao.ticketId; // ID do ticket para onde vai
+                        item.dataset.id = doc.id; 
+                        item.dataset.ticketId = notificacao.ticketId; 
                         
-                        item.innerHTML = `<strong>${notificacao.autorNome}</strong> enviou uma nova mensagem no chamado <strong>#${notificacao.ticketNumero}</strong>`;
+                        item.innerHTML = `Nova mensagem de <strong>${notificacao.autorNome}</strong> no chamado <strong>#${notificacao.ticketNumero}</strong>`;
                         notificationList.appendChild(item);
                     });
                 }
             });
 
-        // 2. Abrir o painel ao clicar no sino
         notificationBell.addEventListener('click', () => {
             notificationPanel.classList.toggle('show');
         });
 
-        // 3. Marcar como lida e redirecionar ao clicar em um item
         notificationList.addEventListener('click', (e) => {
             const item = e.target.closest('.notification-item');
             if (!item) return;
@@ -1257,12 +1284,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const notificacaoId = item.dataset.id;
             const ticketId = item.dataset.ticketId;
 
-            // Marcar como lida no DB
             db.collection('users').doc(currentUser.uid).collection('notificacoes').doc(notificacaoId).update({
                 lida: true
             });
 
-            // Redirecionar
             window.location.href = `detalhes-chamado.html?id=${ticketId}`;
         });
     }
@@ -1346,7 +1371,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const id = target.id;
             if (id === 'btn-voltar-painel' || id === 'btn-ir-painel' || id === 'btn-retornar-painel' || id === 'btn-voltar-dashboard') {
                 
-                if (unsubChat) unsubChat(); // Limpa o listener do chat ao sair da página
+                if (unsubChat) unsubChat(); 
                 
                 const userRole = localStorage.getItem('usuarioRole');
                 if (userRole === 'admin' || userRole === 'suporte') {
@@ -1482,7 +1507,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (onAppPage) {
                 injetaNavbar(); 
                 bindGlobalNavigators(); 
-                initNotifications(); // INICIA O LISTENER DE NOTIFICAÇÕES
+                initNotifications();
 
                 const linkGerenciar = document.getElementById('link-gerenciar-usuarios');
                 if (linkGerenciar) {
