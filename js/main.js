@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let ticketIdParaAlocar = null;
 
     let unsubChat = null;
-    let unsubNotifications = null;
+    // let unsubNotifications = null; // Removido
 
     function getTimestampAtual() {
         return firebase.firestore.FieldValue.serverTimestamp();
@@ -240,7 +240,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function injetaNavbar() {
         const container = document.querySelector('.header-user-actions');
-        if (!container) return;
+        if (!container) {
+            // Fallback para o container antigo se o novo não existir
+            const oldContainer = document.querySelector('.user-menu');
+            if(oldContainer) {
+                const user = auth.currentUser;
+                const nomeUsuario = user ? (user.displayName || user.email) : 'Visitante';
+                if (user) {
+                    localStorage.setItem('usuarioLogado', nomeUsuario);
+                }
+                oldContainer.innerHTML = `
+                    <img src="img/icone_usuario.png" alt="Ícone do Usuário" class="user-icon">
+                    <div class="dropdown-menu">
+                        <span class="user-name">${nomeUsuario}</span>
+                        <a href="#" class="logout-link">Logout</a>
+                    </div>
+                `;
+            }
+            return;
+        }
         
         const user = auth.currentUser;
         const nomeUsuario = user ? (user.displayName || user.email) : 'Visitante';
@@ -249,23 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('usuarioLogado', nomeUsuario);
         }
 
-        // HTML do Sino de Notificação
-        const notificacaoHTML = `
-            <div class="notification-bell" id="notification-bell">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
-                </svg>
-                <span class="notification-badge" id="notification-badge"></span>
-            </div>
-            <div class="notification-panel" id="notification-panel">
-                <h4>Notificações</h4>
-                <ul class="notification-panel-list" id="notification-list">
-                    <li class="notification-item-vazio">Nenhuma notificação</li>
-                </ul>
-            </div>
-        `;
-
-        // HTML do Menu de Usuário
+        // HTML do Menu de Usuário (SEM o sino)
         const userMenuHTML = `
             <div class="user-menu">
                 <img src="img/icone_usuario.png" alt="Ícone do Usuário" class="user-icon">
@@ -276,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        container.innerHTML = notificacaoHTML + userMenuHTML;
+        container.innerHTML = userMenuHTML; // Apenas o menu do usuário
     }
 
     document.addEventListener('click', function(event) {
@@ -286,15 +288,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const isClickInsideMenu = dropdownMenu.contains(event.target);
             if (!isClickOnIcon && !isClickInsideMenu) {
                 dropdownMenu.classList.remove('active');
-            }
-        }
-        
-        const notificationPanel = document.getElementById('notification-panel');
-        if (notificationPanel && notificationPanel.classList.contains('show')) {
-            const isClickOnBell = event.target.closest('#notification-bell');
-            const isClickInsidePanel = notificationPanel.contains(event.target);
-            if (!isClickOnBell && !isClickInsidePanel) {
-                notificationPanel.classList.remove('show');
             }
         }
     });
@@ -343,7 +336,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const userArea = userData.area || null;
                         
                         localStorage.setItem('usuarioRole', userRole);
-                        localStorage.setItem('usuarioArea', userArea || "null"); // Salva 'null' como string
+                        localStorage.setItem('usuarioArea', userArea || "null");
 
                         if (userRole === 'admin' || userRole === 'suporte') {
                             window.location.href = 'dashboard-admin.html';
@@ -815,21 +808,19 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // --- NOVA FUNÇÃO DE CHAT POPUP ---
     function initChatPopup(ticketId, ticketNumero, solicitanteUid) {
         const chatMessagesContainer = document.getElementById('popup-chat-messages');
         const chatForm = document.getElementById('form-chat');
         const chatInput = document.getElementById('chat-input');
         const currentUser = auth.currentUser;
         const userRole = localStorage.getItem('usuarioRole');
-        const userArea = localStorage.getItem('usuarioArea');
 
         if (!chatMessagesContainer || !chatForm || !currentUser) return;
 
         const chatRef = db.collection('chamados').doc(ticketId).collection('chat');
 
         if (unsubChat) {
-            unsubChat(); // Limpa o listener anterior
+            unsubChat();
         }
 
         unsubChat = chatRef.orderBy("timestamp", "asc")
@@ -885,12 +876,6 @@ document.addEventListener('DOMContentLoaded', function() {
             chatRef.add(novaMensagem)
                 .then(() => {
                     newChatInput.value = ''; 
-                    // --- GATILHO DE NOTIFICAÇÃO ---
-                    // Se eu não for o solicitante (ou seja, sou admin/suporte), notifique o solicitante
-                    if (currentUser.uid !== solicitanteUid) {
-                        criarNotificacao(solicitanteUid, ticketId, ticketNumero, "Nova mensagem do suporte");
-                    }
-                    // TODO: Notificar o(s) admin(s)/suporte(s) se o solicitante enviar
                 })
                 .catch(err => {
                     console.error("Erro ao enviar mensagem: ", err);
@@ -944,7 +929,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const chamado = doc.data();
 
-            // --- INICIA O CHAT COM OS DADOS DO CHAMADO ---
             initChatPopup(ticketId, chamado.numeroChamado, chamado.userId);
 
             document.getElementById('detalhes-titulo').textContent = `Chamado #${chamado.numeroChamado || doc.id.substring(0,6)} - ${chamado.titulo}`;
@@ -1215,91 +1199,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- NOVA FUNÇÃO PARA CRIAR NOTIFICAÇÕES ---
-    function criarNotificacao(uidDestinatario, ticketId, ticketNumero, autorNome) {
-        const notificacaoRef = db.collection('users').doc(uidDestinatario).collection('notificacoes');
-        
-        const novaNotificacao = {
-            ticketId: ticketId,
-            ticketNumero: ticketNumero,
-            autorNome: autorNome,
-            lida: false,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        notificacaoRef.add(novaNotificacao)
-            .then(() => console.log("Notificação criada para", uidDestinatario))
-            .catch(err => console.error("Erro ao criar notificação:", err));
-    }
-
-
-    function initNotifications() {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
-
-        const notificationBell = document.getElementById('notification-bell');
-        const notificationBadge = document.getElementById('notification-badge');
-        const notificationPanel = document.getElementById('notification-panel');
-        const notificationList = document.getElementById('notification-list');
-
-        if (!notificationBell || !notificationBadge || !notificationPanel || !notificationList) return;
-
-        if (unsubNotifications) {
-            unsubNotifications();
-        }
-
-        unsubNotifications = db.collection('users').doc(currentUser.uid).collection('notificacoes')
-            .where('lida', '==', false)
-            .orderBy('timestamp', 'desc')
-            .onSnapshot((snapshot) => {
-                
-                if (snapshot.empty) {
-                    notificationBadge.classList.remove('show');
-                    notificationList.innerHTML = '<li class="notification-item-vazio">Nenhuma notificação</li>';
-                } else {
-                    notificationBadge.classList.add('show');
-                    notificationList.innerHTML = ''; 
-                    
-                    snapshot.forEach(doc => {
-                        const notificacao = doc.data();
-                        const item = document.createElement('li');
-                        item.className = 'notification-item';
-                        item.dataset.id = doc.id; 
-                        item.dataset.ticketId = notificacao.ticketId; 
-                        
-                        item.innerHTML = `Nova mensagem de <strong>${notificacao.autorNome}</strong> no chamado <strong>#${notificacao.ticketNumero}</strong>`;
-                        notificationList.appendChild(item);
-                    });
-                }
-            });
-
-        notificationBell.addEventListener('click', () => {
-            notificationPanel.classList.toggle('show');
-        });
-
-        notificationList.addEventListener('click', (e) => {
-            const item = e.target.closest('.notification-item');
-            if (!item) return;
-
-            const notificacaoId = item.dataset.id;
-            const ticketId = item.dataset.ticketId;
-
-            db.collection('users').doc(currentUser.uid).collection('notificacoes').doc(notificacaoId).update({
-                lida: true
-            });
-
-            window.location.href = `detalhes-chamado.html?id=${ticketId}`;
-        });
-    }
-
-
+    
     function bindGlobalNavigators() {
         document.body.addEventListener('click', function(event) {
             const target = event.target; 
             
             if (target.matches('.user-icon')) {
                 event.stopPropagation();
-                const dropdownMenu = target.nextElementSibling;
+                const dropdownMenu = target.closest('.user-menu').querySelector('.dropdown-menu');
                 if (dropdownMenu) {
                     dropdownMenu.classList.toggle('active');
                 }
@@ -1319,7 +1226,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.preventDefault(); 
                 
                 if (unsubChat) unsubChat();
-                if (unsubNotifications) unsubNotifications();
+                // if (unsubNotifications) unsubNotifications(); // Removido
                 
                 auth.signOut().then(() => {
                     localStorage.removeItem('usuarioLogado'); 
@@ -1507,7 +1414,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (onAppPage) {
                 injetaNavbar(); 
                 bindGlobalNavigators(); 
-                initNotifications();
+                // initNotifications(); // Removido
 
                 const linkGerenciar = document.getElementById('link-gerenciar-usuarios');
                 if (linkGerenciar) {

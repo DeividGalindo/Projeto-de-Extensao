@@ -277,13 +277,6 @@ body {
     font-size: 2em;
 }
 
-/* Container para Ações do Usuário no Header */
-.header-user-actions {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
 /* Ícone de Usuário (Header) */
 .user-menu {
     position: relative;
@@ -381,7 +374,7 @@ body {
     padding: 1.5rem;
     border-radius: var(--border-radius);
     border: 1px solid var(--input-color);
-    overflow-x: auto; /* <-- ADICIONADO PARA ROLAGEM HORIZONTAL */
+    overflow-x: auto; 
 }
 
 .tickets-table-header {
@@ -400,7 +393,7 @@ body {
     display: flex;
     justify-content: space-between;
     margin-bottom: 1rem;
-    min-width: 900px; /* <-- CORRIGIDO: Garante que os controles rolem com a tabela */
+    min-width: 900px; 
 }
 
 .filter-container {
@@ -455,7 +448,7 @@ body {
     font-weight: 600;
     opacity: 0.7;
     font-size: 0.9em;
-    min-width: 900px; /* <-- CORRIGIDO: Garante que o cabeçalho role */
+    min-width: 900px; 
 }
 
 .ticket-row.header .status,
@@ -472,7 +465,7 @@ body {
     border-radius: var(--border-radius);
     margin-bottom: 10px;
     transition: background-color 0.3s ease;
-    min-width: 900px; /* <-- CORRIGIDO: Garante que a linha role */
+    min-width: 900px; 
 }
 .ticket-row:hover {
     background-color: var(--input-color);
@@ -491,32 +484,32 @@ body {
 
 /* --- LARGURAS DE COLUNA CORRIGIDAS --- */
 .ticket-cell.id {
-    width: 14%;
+    width: 8%;
     flex-shrink: 0;
 }
 .ticket-cell.titulo {
-    width: 14%;
+    width: 24%;
     font-weight: 600;
     flex-shrink: 0;
 }
 .ticket-cell.categoria {
-    width: 14%;
+    width: 12%;
     opacity: 0.8;
     text-transform: capitalize;
     flex-shrink: 0;
 }
 .ticket-cell.autor {
-    width: 14%;
+    width: 16%;
     opacity: 0.8;
     flex-shrink: 0;
 }
 .ticket-cell.data {
-    width: 14%;
+    width: 15%;
     opacity: 0.8;
     flex-shrink: 0;
 }
 .ticket-cell.status {
-    width: 14%;
+    width: 8%;
     text-align: center; 
     flex-shrink: 0;
 }
@@ -579,7 +572,7 @@ body {
 .details-container {
     max-width: 800px;
     margin: 2rem auto;
-    padding: 20px; 
+    padding: 20px 40px; 
 }
 
 /* --- Contêiner para formulários dentro do app-layout --- */
