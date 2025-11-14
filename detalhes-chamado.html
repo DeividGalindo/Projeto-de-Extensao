@@ -9,43 +9,38 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
-    <body>
-        <div class="app-layout">
-            
-            <aside class="app-sidebar">
-                <div class="logo">Service<span>Desk</span></div>
-                <nav class="sidebar-menu">
-                    <h3 id="admin-menu-header" style="display: none;">Admin</h3>
-                    <ul id="admin-menu-list" style="display: none;">
-                        <li><a href="dashboard-admin.html">Painel Principal</a></li>
-                        <li id="link-gerenciar-usuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
-                    </ul>
-                    <h3>Tickets</h3>
-                    <ul>
-                        <li><a href="#" id="btn-voltar-dashboard"> &larr; Voltar ao Painel</a></li>
-                    </ul>
-                </nav>
-            </aside>
-    
-            <main class="app-main-content">
-                
-                <header class="page-header">
-                    <button class="btn-menu-mobile" id="btn-menu-mobile">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
-                    <div style="width: 40px; flex-shrink: 0;"></div>
-                    <h1 style="flex-grow: 1; text-align: center;">Detalhes do Chamado</h1>
-                    <div class="header-user-actions">
-                        <div class="user-menu"></div> 
-                    </div>
-                </header>
+<body>
 
-    <h1 style="flex-grow: 1; text-align: center;">Abrir Novo Chamado</h1> 
-    <div class="header-user-actions">
-        <div class="user-menu"></div> 
-    </div>
+    <div class="app-layout">
+        
+        <aside class="app-sidebar">
+            <div class="logo">Service<span>Desk</span></div>
+            <nav class="sidebar-menu">
+                <h3 id="admin-menu-header" style="display: none;">Admin</h3>
+                <ul id="admin-menu-list" style="display: none;">
+                    <li><a href="dashboard-admin.html">Painel Principal</a></li>
+                    <li id="link-gerenciar-usuarios" style="display: none;"><a href="gerenciar-usuarios.html">Gerenciar Usuários</a></li>
+                </ul>
+                <h3>Tickets</h3>
+                <ul>
+                    <li><a href="#" id="btn-voltar-dashboard"> &larr; Voltar ao Painel</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="app-main-content">
+            
+            <header class="page-header">
+                <button class="btn-menu-mobile" id="btn-menu-mobile">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div style="width: 40px; flex-shrink: 0;"></div>
+                <h1 style="flex-grow: 1; text-align: center;">Detalhes do Chamado</h1>
+                <div class="header-user-actions">
+                    <div class="user-menu"></div> 
+                </div>
             </header>
 
             <div class="details-container">
@@ -64,8 +59,9 @@
                     <p><strong>Descrição:</strong> <span id="detalhes-descricao">...</span></p>
                 </section>
         
-                <section class="card" id="admin-ticket-controls" style="display: none;">
-                    </section>
+                <button class="btn btn-accent" id="btn-alocar-detalhes" style="display: none; max-width: 250px; margin-bottom: 20px;">
+                    Alocar este Chamado
+                </button>
         
                 <section class="card anexo-card" id="detalhes-anexo-container">
                     <h3>Anexo</h3>
