@@ -491,32 +491,32 @@ body {
 
 /* --- LARGURAS DE COLUNA CORRIGIDAS --- */
 .ticket-cell.id {
-    width: 8%;
+    width: 14%;
     flex-shrink: 0;
 }
 .ticket-cell.titulo {
-    width: 24%;
+    width: 14%;
     font-weight: 600;
     flex-shrink: 0;
 }
 .ticket-cell.categoria {
-    width: 12%;
+    width: 14%;
     opacity: 0.8;
     text-transform: capitalize;
     flex-shrink: 0;
 }
 .ticket-cell.autor {
-    width: 16%;
+    width: 14%;
     opacity: 0.8;
     flex-shrink: 0;
 }
 .ticket-cell.data {
-    width: 15%;
+    width: 14%;
     opacity: 0.8;
     flex-shrink: 0;
 }
 .ticket-cell.status {
-    width: 8%;
+    width: 14%;
     text-align: center; 
     flex-shrink: 0;
 }
