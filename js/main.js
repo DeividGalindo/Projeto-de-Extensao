@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let chamadosDoUsuarioCache = [];
     let chamadosDoAdminCache = [];
+    let usuariosCache = []; // Cache para busca de usuários
     
     let filtroStatusUsuario = 'todos';
     let filtroStatusAdmin = 'todos';
@@ -14,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let ticketIdParaAlocar = null;
 
     let unsubChat = null;
-    // let unsubNotifications = null; // Removido
+    let unsubNotifications = null;
 
     function getTimestampAtual() {
         return firebase.firestore.FieldValue.serverTimestamp();
@@ -240,25 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function injetaNavbar() {
         const container = document.querySelector('.header-user-actions');
-        if (!container) {
-            // Fallback para o container antigo se o novo não existir
-            const oldContainer = document.querySelector('.user-menu');
-            if(oldContainer) {
-                const user = auth.currentUser;
-                const nomeUsuario = user ? (user.displayName || user.email) : 'Visitante';
-                if (user) {
-                    localStorage.setItem('usuarioLogado', nomeUsuario);
-                }
-                oldContainer.innerHTML = `
-                    <img src="img/icone_usuario.png" alt="Ícone do Usuário" class="user-icon">
-                    <div class="dropdown-menu">
-                        <span class="user-name">${nomeUsuario}</span>
-                        <a href="#" class="logout-link">Logout</a>
-                    </div>
-                `;
-            }
-            return;
-        }
+        if (!container) return;
         
         const user = auth.currentUser;
         const nomeUsuario = user ? (user.displayName || user.email) : 'Visitante';
@@ -266,8 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (user) {
             localStorage.setItem('usuarioLogado', nomeUsuario);
         }
-
-        // HTML do Menu de Usuário (SEM o sino)
+        
         const userMenuHTML = `
             <div class="user-menu">
                 <img src="img/icone_usuario.png" alt="Ícone do Usuário" class="user-icon">
@@ -278,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        container.innerHTML = userMenuHTML; // Apenas o menu do usuário
+        container.innerHTML = userMenuHTML;
     }
 
     document.addEventListener('click', function(event) {
@@ -820,7 +802,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const chatRef = db.collection('chamados').doc(ticketId).collection('chat');
 
         if (unsubChat) {
-            unsubChat();
+            unsubChat(); 
         }
 
         unsubChat = chatRef.orderBy("timestamp", "asc")
@@ -1123,7 +1105,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initGerenciarUsuarios() {
         const container = document.getElementById('user-list-container');
-        if (!container) return;
+        const searchInput = document.getElementById('campo-busca-usuarios');
+        if (!container || !searchInput) return;
     
         if (localStorage.getItem('usuarioRole') !== 'admin') {
             showToast("Acesso negado.", "error");
@@ -1132,74 +1115,113 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     
         db.collection("users").get().then((querySnapshot) => {
-            container.innerHTML = '';
+            usuariosCache = []; // Limpa e preenche o cache
             querySnapshot.forEach((doc) => {
                 const user = doc.data();
-    
-                if (user.role === 'admin') return;
-    
-                const card = document.createElement('div');
-                card.className = 'user-management-card';
+                if (user.role !== 'admin') {
+                    usuariosCache.push(user);
+                }
+            });
+            renderGerenciarUsuariosList(); // Renderiza a lista inicial
+        });
+
+        // Adiciona o listener para a busca
+        searchInput.addEventListener('keyup', renderGerenciarUsuariosList);
+    }
+
+    // --- NOVA FUNÇÃO DE RENDERIZAÇÃO PARA GERENCIAR USUÁRIOS ---
+    function renderGerenciarUsuariosList() {
+        const container = document.getElementById('user-list-container');
+        const searchInput = document.getElementById('campo-busca-usuarios');
+        if (!container) return;
+
+        const searchTerm = searchInput.value.toLowerCase();
+
+        // Filtra o cache
+        const usuariosFiltrados = usuariosCache.filter(user => {
+            const nome = user.nomeCompleto ? user.nomeCompleto.toLowerCase() : '';
+            const email = user.email ? user.email.toLowerCase() : '';
+            return nome.includes(searchTerm) || email.includes(searchTerm);
+        });
+
+        container.innerHTML = ''; // Limpa a lista atual
+
+        if (usuariosFiltrados.length === 0) {
+            container.innerHTML = '<p>Nenhum usuário encontrado.</p>';
+            return;
+        }
+
+        usuariosFiltrados.forEach(user => {
+            const card = document.createElement('div');
+            card.className = 'user-management-card';
+            
+            card.innerHTML = `
+                <div class="user-management-info">
+                    <h4>${user.nomeCompleto}</h4>
+                    <p>${user.email}</p>
+                </div>
+                <select class="user-role-select" data-uid="${user.uid}">
+                    <option value="solicitante" ${user.role === 'solicitante' ? 'selected' : ''}>Usuario</option>
+                    <option value="suporte" ${user.role === 'suporte' ? 'selected' : ''}>Suporte</option>
+                </select>
                 
-                card.innerHTML = `
-                    <div class="user-management-info">
-                        <h4>${user.nomeCompleto}</h4>
-                        <p>${user.email}</p>
-                    </div>
-                    <select class="user-role-select" data-uid="${user.uid}">
-                        <option value="solicitante" ${user.role === 'solicitante' ? 'selected' : ''}>Usuario</option>
-                        <option value="suporte" ${user.role === 'suporte' ? 'selected' : ''}>Suporte</option>
+                <div class="area-select-container" id="area-container-${user.uid}" style="display: ${user.role === 'suporte' ? 'block' : 'none'};">
+                    <label>Área de Suporte:</label>
+                    <select class="area-select" data-uid="${user.uid}">
+                        <option value="null" ${!user.area ? 'selected' : ''}>Nenhuma</option>
+                        <option value="hardware" ${user.area === 'hardware' ? 'selected' : ''}>Hardware</option>
+                        <option value="software" ${user.area === 'software' ? 'selected' : ''}>Software</option>
+                        <option value="rede" ${user.area === 'rede' ? 'selected' : ''}>Rede</option>
+                        <option value="outros" ${user.area === 'outros' ? 'selected' : ''}>Outros</option>
                     </select>
-                    
-                    <div class="area-select-container" id="area-container-${user.uid}" style="display: ${user.role === 'suporte' ? 'block' : 'none'};">
-                        <label>Área de Suporte:</label>
-                        <select class="area-select" data-uid="${user.uid}">
-                            <option value="null" ${!user.area ? 'selected' : ''}>Nenhuma</option>
-                            <option value="hardware" ${user.area === 'hardware' ? 'selected' : ''}>Hardware</option>
-                            <option value="software" ${user.area === 'software' ? 'selected' : ''}>Software</option>
-                            <option value="rede" ${user.area === 'rede' ? 'selected' : ''}>Rede</option>
-                            <option value="outros" ${user.area === 'outros' ? 'selected' : ''}>Outros</option>
-                        </select>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-    
-            document.querySelectorAll('.user-role-select').forEach(select => {
-                select.addEventListener('change', (event) => {
-                    const newRole = event.target.value;
-                    const uid = event.target.dataset.uid;
-                    const areaContainer = document.getElementById(`area-container-${uid}`);
-                    
-                    let updateData = { role: newRole };
-    
-                    if (newRole === 'suporte') {
-                        areaContainer.style.display = 'block';
-                    } else {
-                        areaContainer.style.display = 'none';
-                        updateData.area = null; 
-                    }
+                </div>
+            `;
+            container.appendChild(card);
+        });
 
-                    db.collection('users').doc(uid).update(updateData)
-                        .then(() => showToast("Permissão atualizada!", "success"))
-                        .catch(err => showToast("Erro ao atualizar permissão.", "error"));
-                });
-            });
+        // Re-anexa os listeners para os <select>s
+        attachRoleSelectListeners();
+        attachAreaSelectListeners();
+    }
 
-            document.querySelectorAll('.area-select').forEach(select => {
-                select.addEventListener('change', (event) => {
-                    const newArea = event.target.value === 'null' ? null : event.target.value;
-                    const uid = event.target.dataset.uid;
-                    
-                    db.collection('users').doc(uid).update({ area: newArea })
-                        .then(() => showToast("Área do suporte atualizada!", "success"))
-                        .catch(err => showToast("Erro ao atualizar área.", "error"));
-                });
+    // --- NOVAS FUNÇÕES HELPER PARA LISTENERS ---
+    function attachRoleSelectListeners() {
+        document.querySelectorAll('.user-role-select').forEach(select => {
+            select.addEventListener('change', (event) => {
+                const newRole = event.target.value;
+                const uid = event.target.dataset.uid;
+                const areaContainer = document.getElementById(`area-container-${uid}`);
+                
+                let updateData = { role: newRole };
+
+                if (newRole === 'suporte') {
+                    areaContainer.style.display = 'block';
+                } else {
+                    areaContainer.style.display = 'none';
+                    updateData.area = null; 
+                }
+
+                db.collection('users').doc(uid).update(updateData)
+                    .then(() => showToast("Permissão atualizada!", "success"))
+                    .catch(err => showToast("Erro ao atualizar permissão.", "error"));
             });
         });
     }
 
-    
+    function attachAreaSelectListeners() {
+        document.querySelectorAll('.area-select').forEach(select => {
+            select.addEventListener('change', (event) => {
+                const newArea = event.target.value === 'null' ? null : event.target.value;
+                const uid = event.target.dataset.uid;
+                
+                db.collection('users').doc(uid).update({ area: newArea })
+                    .then(() => showToast("Área do suporte atualizada!", "success"))
+                    .catch(err => showToast("Erro ao atualizar área.", "error"));
+            });
+        });
+    }
+
+
     function bindGlobalNavigators() {
         document.body.addEventListener('click', function(event) {
             const target = event.target; 

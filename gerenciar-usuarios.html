@@ -19,7 +19,7 @@
                 <h3>Admin</h3>
                 <ul>
                     <li><a href="dashboard-admin.html">Painel Principal</a></li>
-                    <li><a href="gerenciar-usuarios.html" class="active">Gerenciar Usuários</a></li>
+                    <li id="link-gerenciar-usuarios" style="display: none;"><a href="gerenciar-usuarios.html" class="active">Gerenciar Usuários</a></li>
                 </ul>
                 <h3>Tickets</h3>
                 <ul>
@@ -37,14 +37,18 @@
                     <span></span>
                 </button>
                 <h1>Gerenciar Usuários</h1>
-                <div class="user-menu">
-                    </div>
+                <div class="header-user-actions">
+                    <div class="user-menu"></div>
+                </div>
             </header>
 
             <div class="card">
                 <h2>Lista de Usuários</h2>
                 <p style="opacity: 0.7; margin-top: -10px; margin-bottom: 20px;">Defina as permissões de cada usuário do sistema. Apenas o Admin Master pode ver esta página.</p>
                 
+                <div class="search-container" style="margin-bottom: 20px;">
+                    <input type="search" id="campo-busca-usuarios" placeholder="Buscar por nome ou email...">
+                </div>
                 <div id="user-list-container">
                     <p>Carregando usuários...</p>
                 </div>
